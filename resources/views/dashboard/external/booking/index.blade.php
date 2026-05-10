@@ -1,0 +1,459 @@
+<x-iziipay>
+
+    <style>
+        :root {
+            --page-bg: #2a6495;
+            --page-bg-end: #295e78;
+            --panel-bg: #04345c;
+            --status-approved: #39b54a;
+            --status-pending: #f5a623;
+            --status-pending-text: #3a2a08;
+            --status-declined: #ef4b4b;
+            --white: #ffffff;
+            --header-text: #0b4e6a;
+            --cell-text: #0e4b67;
+            --table-sep: #0f5b78;
+            --txn-color: #2a6495;
+            --pagination-border: #ccc;
+            --pagination-active-bg: #093645;
+            --pagination-active-color: #fff;
+            --btn-bg: #fff;
+            --btn-color: #2a6495;
+            --btn-hover-bg: #2a6495;
+            --btn-hover-color: #fff;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", sans-serif;
+            background: linear-gradient(180deg, var(--page-bg), var(--page-bg-end) 120%);
+            color: var(--white);
+        }
+
+        .page-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* padding: 40px 20px; */
+        }
+
+        .panel {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 34px;
+        }
+
+        .panel-header h1 {
+            font-weight: 700;
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+
+        .panel-header p {
+            color: #accbd8;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .panel-header a {
+            text-decoration: none;
+        }
+
+        .table-card {
+            background: var(--white);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        table.custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px !important;
+            color: var(--cell-text);
+        }
+
+        thead th {
+            padding: 16px;
+            font-weight: 600;
+            color: var(--header-text);
+            border-bottom: 1px solid var(--table-sep);
+            text-align: left;
+            font-size: 14px
+        }
+
+        tbody td {
+            padding: 16px;
+            border-bottom: 1px solid var(--table-sep);
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--cell-text);
+            text-align: left !important;
+        }
+
+        .col-amount {
+            font-weight: 600;
+            text-align: center;
+            word-break: keep-all;
+        }
+
+        .col-status {
+            text-align: center;
+        }
+
+        .col-txn {
+            text-align: right;
+            color: var(--txn-color);
+        }
+
+        .badge-status {
+            padding: 6px 14px;
+            border-radius: 999px;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .badge-approved {
+            background: var(--status-approved);
+        }
+
+        .badge-pending {
+            background: var(--status-pending);
+            color: var(--status-pending-text);
+        }
+
+        .badge-declined {
+            background: var(--status-declined);
+        }
+
+        .btn-outline-light {
+            border-color: var(--white) !important;
+        }
+
+        .btn-outline-light:hover {
+            background-color: var(--white) !important;
+            border-color: var(--white) !important;
+        }
+
+        .footer-section {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .custom-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .custom-pagination .page-link {
+            border-radius: 8px;
+            min-width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--pagination-border);
+            color: var(--txn-color);
+            font-weight: 400;
+        }
+
+        .custom-pagination .active .page-link {
+            background: var(--pagination-active-bg);
+            color: var(--pagination-active-color);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .actions a {
+            text-decoration: none;
+        }
+
+        .btn-pill {
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            background: var(--btn-bg);
+            color: var(--btn-color);
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-pill:hover {
+            background: var(--btn-hover-bg);
+            color: var(--btn-hover-color);
+            cursor: pointer;
+        }
+
+        .btn-pill.active {
+            background: var(--btn-hover-bg);
+            color: var(--btn-hover-color);
+        }
+
+        .btn-pill.active:hover {
+            background: var(--btn-bg);
+            color: var(--btn-color);
+        }
+
+        @media (max-width: 600px) {
+            .btn-pill {
+                min-width: 100%;
+            }
+        }
+    </style>
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ route('external.dashboard') }}" class="text-light">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-light" aria-current="page">
+                <i class="fas fa-calendar-alt me-1"></i>Booking History
+            </li>
+        </ol>
+    </nav>
+    <div class="page-wrap">
+
+        <div class="panel">
+            <div class="d-flex justify-content-between align-items-center flex-column flex-md-row">
+                <div class="panel-header mb-4">
+                    <h1>{{ __('words.transaction_history') }}</h1>
+                    <p>{{ __('words.transaction_history_overview') }}</p>
+                </div>
+                <div class="panel-header mb-3">
+                    <a href="{{ route('external.booking.create') }}" class="btn-pill"> <i class="fas fa-plus me-1"></i>
+                        {{ __('words.new_booking') }}</a>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div style="overflow-x: auto">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                {{-- <th>ID</th> --}}
+                                <th>{{ __('words.booking_number') }}</th>
+                                <th>{{ __('words.phone_number') }}</th>
+                                <th>{{ __('words.amount') }}</th>
+                                <th>{{ __('words.status') }}</th>
+                                <th>{{ __('words.transaction_id') }}</th>
+                                <th>{{ __('words.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($bookings as $booking)
+                                {{-- @dd($booking) --}}
+                                <tr>
+                                    {{-- <td>{{ $booking->id }}</td> --}}
+                                    <td>{{ $booking->booking_number }}</td>
+                                    <td>{{ $booking->phone_number }} </td>
+                                    <td class="col-amount">
+                                        {{ Iziibuy::price($booking->total, currency: $booking->currency) }}</td>
+                                    <td class="col-status">
+
+                                        <span
+                                            class="badge-status
+    {{ $booking->status == 'PENDING' ? 'badge-pending' : ($booking->status == 'DECLINED' ? 'badge-declined' : 'badge-approved') }}">
+                                            {{ __($booking->status()) }}
+                                        </span>
+                                    </td>
+                                    <td class="col-txn">{{ $booking->elavon_transaction_id  ? $booking->elavon_transaction_id : 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ route('external.booking.invoice', $booking) }}"
+                                                class="btn btn-sm btn-outline-light p-0"
+                                                title="{{ __('words.view_invoice') }}">
+                                                <img src="{{ asset('assets/dashboard/invoice.png') }}" width="36"
+                                                    alt="{{ __('words.view_invoice') }}">
+                                            </a>
+                                            @if ($booking->payment_url)
+                                                <button class="btn btn-sm btn-outline-light btn-copy-url p-0"
+                                                    data-url="{{ route('external-payment-page', $booking) }}"
+                                                    title="{{ __('words.copy_payment_link') }}">
+                                                    <img src="{{ asset('assets/dashboard/copy.png') }}" width="36"
+                                                        alt="{{ __('words.copy_payment_link') }}">
+                                                </button>
+                                            @endif
+                                            {{-- <x-helpers.delete :url="route('external.booking.destroy', $booking)" :id="$booking->id" /> --}}
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center">{{ __('words.no_bookings_found') }}</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="footer-section">
+                {{ $bookings->links('vendor.pagination.custom') }}
+
+                <div class="actions">
+                    <a href="{{ route('external.booking.export') }}"
+                        class="btn-pill active">{{ __('words.export_csv') }}</a>
+
+                    <button class="btn-pill" data-bs-toggle="modal"
+                        data-bs-target="#filterModal">{{ __('words.filter') }}</button>
+
+                    <a href="{{ url()->current() }}" class="btn-pill">{{ __('words.refresh') }}</a>
+
+                    <button class="btn-pill" data-bs-toggle="modal"
+                        data-bs-target="#dateFilterModal">{{ __('words.date_filter') }}</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="GET" action="{{ route('external.booking.index') }}">
+                <div class="modal-content shadow-lg border-0 rounded-4">
+
+                    <div class="modal-header border-bottom-0 pt-4 px-4 pb-2">
+                        <h5 class="modal-title fw-bold text-dark" id="filterModalLabel">
+                            <i class="bi bi-funnel-fill me-2 text-primary"></i>{{ __('words.filter_bookings') }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="{{ __('words.close') }}"></button>
+                    </div>
+
+                    <div class="modal-body px-4 py-3">
+
+                        <div class="mb-3">
+                            <label for="booking_number"
+                                class="form-label text-muted small mb-1">{{ __('words.booking_number') }}</label>
+                            <input type="text" class="form-control form-control-lg rounded-3" id="booking_number"
+                                name="booking_number" placeholder="{{ __('words.e.g.,_12324') }}"
+                                aria-label="{{ __('words.booking_number') }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone_number"
+                                class="form-label text-muted small mb-1">{{ __('words.phone_number') }}</label>
+                            <input type="tel" class="form-control form-control-lg rounded-3" id="phone_number"
+                                name="phone_number" placeholder="{{ __('words.e.g.,_+1234567890') }}"
+                                aria-label="{{ __('words.phone_number') }}">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="status"
+                                class="form-label text-muted small mb-1">{{ __('words.booking_status') }}</label>
+                            <select name="status" id="status" class="form-select form-select-lg rounded-3">
+                                <option value="" selected>— {{ __('words.any_status') }} —</option>
+
+                                <option value="PENDING">{{ __('words.pending') }}</option>
+                                {{-- <option value="CANCELLED">{{ __('words.cancelled') }}</option> --}}
+                                <option value="COMPLETED">{{ __('words.completed') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer justify-content-between border-top-0 pt-2 pb-4 px-4">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                            data-bs-dismiss="modal">
+                            <i class="fa fa-times me-1"></i> {{ __('words.reset') }}
+                        </button>
+
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="fa fa-search me-1"></i> {{ __('words.apply_filters') }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="modal fade" id="dateFilterModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="GET" action="{{ route('external.booking.index') }}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-dark">{{ __('words.filter_by_date') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label">{{ __('words.from_date') }}</label>
+                        <input type="date" class="form-control mb-2" name="from_date">
+
+                        <label class="form-label">{{ __('words.to_date') }}</label>
+                        <input type="date" class="form-control mb-2" name="to_date">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal"> <i class="fa fa-times me-1"></i>
+                            {{ __('words.reset') }}</button>
+                        <button class="btn btn-primary" type="submit"> <i class="fa fa-search me-1"></i>
+                            {{ __('words.apply') }}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Copy payment link functionality
+        document.addEventListener('click', function(event) {
+            var trigger = event.target.closest('.btn-copy-url');
+            if (!trigger) return;
+
+            var url = trigger.getAttribute('data-url') || '';
+            if (!url) return;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied!',
+                        text: 'Payment link copied to clipboard',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }).catch(function() {
+                    fallbackCopy(url);
+                });
+            } else {
+                fallbackCopy(url);
+            }
+        });
+
+        function fallbackCopy(text) {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: 'Payment link copied to clipboard',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (e) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to copy payment link'
+                });
+            }
+            document.body.removeChild(textarea);
+        }
+    </script>
+</x-iziipay>

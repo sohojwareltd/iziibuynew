@@ -1,0 +1,13 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/* Slightly softer chrome so the panel feels closer to the storefront brand. */
+.fi-sidebar {
+    @apply shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10;
+}
+
+.fi-topbar {
+    @apply shadow-sm;
+}
