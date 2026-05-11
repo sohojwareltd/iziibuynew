@@ -9,6 +9,13 @@ class Page extends Model
 {
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'status' => 'string',
+        ];
+    }
+
     /**
      * @return BelongsTo<User, $this>
      */

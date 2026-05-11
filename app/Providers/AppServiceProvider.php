@@ -10,6 +10,8 @@ use App\Facades\IziibuyFacades;
 use App\Models\Order;
 use App\Observers\OrderObserver;
 use App\Support\Voyager;
+use App\Support\VoyagerPermissions;
+use Filament\Tables\Table;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
@@ -41,11 +43,21 @@ class AppServiceProvider extends ServiceProvider
             class_alias(Voyager::class, 'Voyager');
         }
 
+        if (! class_exists('VoyagerPermission', false)) {
+            class_alias(VoyagerPermissions::class, 'VoyagerPermission');
+        }
+
         if (! class_exists('Permission', false)) {
             class_alias(Permissions::class, 'Permission');
         }
 
         Order::observe(OrderObserver::class);
+
+        Table::configureUsing(function (Table $table): void {
+            $table
+                ->striped()
+                ->paginationPageOptions([10, 25, 50, 100]);
+        });
 
         Blade::if('vendor', function () {
             return Auth::check() && Auth::user()->role_id == 3;
@@ -57,6 +69,10 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::if('permission', function ($feature, $action) {
             return Permissions::check($feature, $action);
+        });
+
+        Blade::if('voyagerBread', function (string $action, string $slug) {
+            return VoyagerPermissions::allows(null, $action, $slug);
         });
 
         Paginator::useBootstrap();

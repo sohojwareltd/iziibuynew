@@ -11,15 +11,14 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -84,69 +83,129 @@ class OrderResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
+        $statusLabels = [
+            0 => __('words.status_pending'),
+            1 => __('words.status_paid'),
+            2 => __('words.status_shipped'),
+            3 => __('words.status_canceled'),
+            4 => __('words.not_delivered'),
+            5 => __('words.delivered'),
+        ];
+
         return $schema
             ->components([
-                TextEntry::make('store_id')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('user_id')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('shop_id')
-                    ->numeric(),
-                TextEntry::make('referral_code')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('payment_id')
-                    ->placeholder('-'),
-                TextEntry::make('payment_url')
-                    ->placeholder('-')
-                    ->columnSpanFull(),
-                TextEntry::make('discount')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('discount_code')
-                    ->placeholder('-'),
-                TextEntry::make('subtotal')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('tax')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('shipping_cost')
-                    ->money()
-                    ->placeholder('-'),
-                TextEntry::make('shipping_method')
-                    ->placeholder('-'),
-                TextEntry::make('total')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('payment_method')
-                    ->placeholder('-'),
-                IconEntry::make('status')
-                    ->boolean(),
-                TextEntry::make('refund')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('payment_status')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('is_company')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('currency'),
-                TextEntry::make('type')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('created_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('updated_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('paid_at')
-                    ->date()
-                    ->placeholder('-'),
+                Section::make(__('Order summary'))
+                    ->icon(Heroicon::OutlinedShoppingBag)
+                    ->columns(3)
+                    ->schema([
+                        TextEntry::make('id')
+                            ->label(__('Order #'))
+                            ->weight('bold'),
+                        TextEntry::make('status')
+                            ->label(__('Status'))
+                            ->badge()
+                            ->formatStateUsing(function ($state) use ($statusLabels): string {
+                                $key = (int) $state;
+
+                                return $statusLabels[$key] ?? (string) $state;
+                            })
+                            ->color(function ($state): string {
+                                $key = (int) $state;
+
+                                return match ($key) {
+                                    1, 5 => 'success',
+                                    0, 2 => 'warning',
+                                    3, 4 => 'danger',
+                                    default => 'gray',
+                                };
+                            }),
+                        TextEntry::make('currency')
+                            ->placeholder('-'),
+                        TextEntry::make('shop.user_name')
+                            ->label(__('Shop'))
+                            ->placeholder('-'),
+                        TextEntry::make('user.email')
+                            ->label(__('Customer email'))
+                            ->placeholder('-')
+                            ->columnSpanFull(),
+                    ]),
+                Section::make(__('Amounts'))
+                    ->icon(Heroicon::OutlinedBanknotes)
+                    ->columns(3)
+                    ->schema([
+                        TextEntry::make('subtotal')
+                            ->money('NOK')
+                            ->placeholder('-'),
+                        TextEntry::make('tax')
+                            ->money('NOK')
+                            ->placeholder('-'),
+                        TextEntry::make('shipping_cost')
+                            ->money('NOK')
+                            ->placeholder('-'),
+                        TextEntry::make('discount')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('total')
+                            ->money('NOK')
+                            ->weight('bold')
+                            ->placeholder('-'),
+                        TextEntry::make('refund')
+                            ->money('NOK')
+                            ->placeholder('-'),
+                    ]),
+                Section::make(__('Payment'))
+                    ->icon(Heroicon::OutlinedCreditCard)
+                    ->columns(2)
+                    ->collapsible()
+                    ->schema([
+                        TextEntry::make('payment_id')
+                            ->placeholder('-'),
+                        TextEntry::make('payment_method')
+                            ->placeholder('-'),
+                        TextEntry::make('payment_url')
+                            ->placeholder('-')
+                            ->columnSpanFull(),
+                        TextEntry::make('payment_status')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('paid_at')
+                            ->dateTime()
+                            ->placeholder('-'),
+                    ]),
+                Section::make(__('Meta'))
+                    ->icon(Heroicon::OutlinedInformationCircle)
+                    ->columns(3)
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        TextEntry::make('store_id')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('user_id')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('shop_id')
+                            ->numeric(),
+                        TextEntry::make('referral_code')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('discount_code')
+                            ->placeholder('-'),
+                        TextEntry::make('shipping_method')
+                            ->placeholder('-'),
+                        TextEntry::make('is_company')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('type')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('created_at')
+                            ->dateTime()
+                            ->placeholder('-'),
+                        TextEntry::make('updated_at')
+                            ->dateTime()
+                            ->placeholder('-'),
+                    ]),
             ]);
     }
 
@@ -154,59 +213,105 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('store_id')
-                    ->numeric()
+                TextColumn::make('id')
+                    ->label('#')
                     ->sortable(),
-                TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('shop_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('referral_code')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('payment_id')
-                    ->searchable(),
-                TextColumn::make('discount')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('discount_code')
-                    ->searchable(),
-                TextColumn::make('subtotal')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('tax')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('shipping_cost')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('shipping_method')
+                TextColumn::make('shop.user_name')
+                    ->label(__('Shop'))
+                    ->toggleable()
                     ->searchable(),
                 TextColumn::make('total')
-                    ->numeric()
-                    ->sortable(),
+                    ->money('NOK')
+                    ->sortable()
+                    ->alignEnd(),
+                TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(function ($state): string {
+                        $labels = [
+                            0 => __('words.status_pending'),
+                            1 => __('words.status_paid'),
+                            2 => __('words.status_shipped'),
+                            3 => __('words.status_canceled'),
+                            4 => __('words.not_delivered'),
+                            5 => __('words.delivered'),
+                        ];
+                        $key = (int) $state;
+
+                        return $labels[$key] ?? (string) $state;
+                    })
+                    ->color(function ($state): string {
+                        $key = (int) $state;
+
+                        return match ($key) {
+                            1, 5 => 'success',
+                            0, 2 => 'warning',
+                            3, 4 => 'danger',
+                            default => 'gray',
+                        };
+                    }),
                 TextColumn::make('payment_method')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
-                IconColumn::make('status')
-                    ->boolean(),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable(),
+                TextColumn::make('store_id')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user_id')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('shop_id')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('referral_code')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('payment_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('discount')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('discount_code')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('subtotal')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('tax')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('shipping_cost')
+                    ->money('NOK')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('shipping_method')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('refund')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('payment_status')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('is_company')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('currency')
                     ->searchable(),
                 TextColumn::make('type')
                     ->numeric()
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
@@ -215,13 +320,17 @@ class OrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('paid_at')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->modalWidth('5xl')
+                    ->modalHeading(fn (Order $record): string => __('Order').' #'.$record->getKey()),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

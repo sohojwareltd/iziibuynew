@@ -10,6 +10,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -44,8 +45,51 @@ class EnterpriseOnboardingResource extends Resource
                 TextInput::make('company_email')
                     ->email()
                     ->required(),
-                TextInput::make('company_address')
-                    ->required(),
+                Textarea::make('company_address')
+                    ->required()
+                    ->rows(4)
+                    ->helperText(__('JSON object with street, zip, city, etc., or a single-line address'))
+                    ->formatStateUsing(function (mixed $state): string {
+                        if ($state === null || $state === '') {
+                            return '';
+                        }
+                        if (is_string($state)) {
+                            return $state;
+                        }
+                        if (is_object($state) || is_array($state)) {
+                            try {
+                                $encoded = json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+                                return is_string($encoded) ? $encoded : '';
+                            } catch (\JsonException) {
+                                return '';
+                            }
+                        }
+
+                        return '';
+                    })
+                    ->dehydrateStateUsing(function (mixed $state): array|string|null {
+                        if ($state === null) {
+                            return null;
+                        }
+                        if (! is_string($state)) {
+                            return null;
+                        }
+                        $trimmed = trim($state);
+                        if ($trimmed === '') {
+                            return null;
+                        }
+                        try {
+                            $decoded = json_decode($trimmed, true, 512, JSON_THROW_ON_ERROR);
+                            if (is_array($decoded)) {
+                                return $decoded;
+                            }
+                        } catch (\JsonException) {
+                            // Plain text / legacy single-line address
+                        }
+
+                        return $trimmed;
+                    }),
                 TextInput::make('company_registration')
                     ->required(),
                 TextInput::make('company_domain')
@@ -108,7 +152,8 @@ class EnterpriseOnboardingResource extends Resource
                 TextColumn::make('company_email')
                     ->searchable(),
                 TextColumn::make('company_address')
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(fn (mixed $state): string => EnterpriseOnboarding::companyAddressAsString($state)),
                 TextColumn::make('company_registration')
                     ->searchable(),
                 TextColumn::make('company_domain')

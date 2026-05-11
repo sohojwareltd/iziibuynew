@@ -16,6 +16,14 @@ class RetailerFinanceOverviewWidget extends StatsOverviewWidget
 
     protected ?string $description = 'Partner network and withdrawal queue.';
 
+    /**
+     * @var int|array<string, int|null>|null
+     */
+    protected int|array|null $columns = [
+        'default' => 1,
+        'sm' => 3,
+    ];
+
     protected function getStats(): array
     {
         $pending = RetailerWithdrawal::query()->where('status', 0)->count();
@@ -23,9 +31,13 @@ class RetailerFinanceOverviewWidget extends StatsOverviewWidget
         return [
             Stat::make(__('Retailers'), number_format(RetailerMeta::query()->count()))
                 ->description(__('Onboarded partners'))
+                ->descriptionIcon(Heroicon::OutlinedBuildingStorefront)
+                ->color('gray')
                 ->icon(Heroicon::OutlinedBuildingStorefront),
             Stat::make(__('Pending withdrawals'), number_format($pending))
                 ->description(__('Awaiting approval'))
+                ->descriptionIcon(Heroicon::OutlinedClock)
+                ->color('warning')
                 ->icon(Heroicon::OutlinedBanknotes),
             Stat::make(
                 __('Paid withdrawals (30 days)'),
@@ -37,6 +49,8 @@ class RetailerFinanceOverviewWidget extends StatsOverviewWidget
                 )
             )
                 ->description(__('Completed in the last month'))
+                ->descriptionIcon(Heroicon::OutlinedCheckCircle)
+                ->color('success')
                 ->icon(Heroicon::OutlinedCheckCircle),
         ];
     }

@@ -88,7 +88,7 @@ return [
         |--------------------------------------------------------------------------
         |
         | Read-only connection to the old application database for data imports
-        | (see php artisan iziibuy:import-legacy-database).
+        | (see php artisan iziibuy:import-legacy-database, iziibuy:import-legacy-cms, iziibuy:import-voyager-permissions).
         |
         */
         'legacy_iziibuy' => [
@@ -173,7 +173,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
         ],
 
         'default' => [

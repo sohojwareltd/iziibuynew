@@ -3,11 +3,77 @@
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 
-/* Slightly softer chrome so the panel feels closer to the storefront brand. */
+/*
+|--------------------------------------------------------------------------
+| Brand & panel chrome
+|--------------------------------------------------------------------------
+*/
 .fi-sidebar {
     @apply shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10;
 }
 
 .fi-topbar {
-    @apply shadow-sm;
+    @apply shadow-sm border-b border-gray-200/80 dark:border-white/10;
+}
+
+/* Slightly denser main content for data-heavy admin */
+.fi-main {
+    @apply bg-gray-50/80 dark:bg-gray-950;
+}
+
+/* Primary stat / focus tint on dashboard */
+.fi-wi-stats-overview .fi-section-content-ctn {
+    @apply gap-4;
+}
+
+/* Stat tiles: clearer hierarchy */
+.fi-wi-stats-overview-stat {
+    @apply rounded-xl shadow-sm ring-1 ring-gray-950/5 transition hover:shadow-md hover:ring-primary-500/20 dark:ring-white/10 dark:hover:ring-primary-400/25;
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
+    @apply tracking-tight;
+}
+
+/* Dashboard table widgets: card-like container */
+.fi-wi-table .fi-section.rounded-xl,
+.fi-wi-table > .fi-section {
+    @apply overflow-hidden rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10;
+}
+
+.fi-wi-table .fi-ta {
+    @apply rounded-b-xl;
+}
+
+.fi-wi-table .fi-ta-header-cell {
+    @apply font-semibold uppercase tracking-wide text-xs text-gray-500 dark:text-gray-400;
+}
+
+/* Softer striped rows globally */
+.fi-ta-table tbody tr.fi-ta-row:nth-child(even) {
+    @apply bg-gray-50/70 dark:bg-white/[0.02];
+}
+
+/* Infolist / view: sections read cleaner */
+.fi-in-section
+    .fi-section-header
+    .fi-section-header-heading {
+    @apply text-base font-semibold text-gray-950 dark:text-white;
+}
+
+.fi-in-section .fi-section.rounded-xl {
+    @apply shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10;
+}
+
+.fi-in-text-entry .fi-in-entry-label {
+    @apply text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400;
+}
+
+/* Custom widget hooks */
+.fi-wi-admin-quick-links .fi-section {
+    @apply overflow-hidden rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10;
+}
+
+.fi-wi-sales-dashboard-filters .fi-section {
+    @apply overflow-hidden rounded-xl bg-gradient-to-br from-white to-primary-50/30 shadow-sm ring-1 ring-primary-500/10 dark:from-gray-900 dark:to-primary-950/20 dark:ring-primary-400/20;
 }
