@@ -12,8 +12,11 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Components\Utilities\Get;
+use Filament\Support\Components\Utilities\Set;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
@@ -47,9 +50,6 @@ class SiteSettingResource extends Resource
                 TextInput::make('label')
                     ->required()
                     ->maxLength(255),
-                Textarea::make('value')
-                    ->columnSpanFull()
-                    ->rows(4),
                 Select::make('type')
                     ->options([
                         'text' => __('Single line'),
@@ -58,7 +58,22 @@ class SiteSettingResource extends Resource
                         'checkbox' => __('On / off (stored as 0 or 1)'),
                     ])
                     ->required()
-                    ->default('text'),
+                    ->default('text')
+                    ->live()
+                    ->afterStateUpdated(fn (Set $set) => $set('value', null)),
+                TextInput::make('value')
+                    ->maxLength(255)
+                    ->visible(fn (Get $get): bool => $get('type') === 'text'),
+                Textarea::make('value')
+                    ->rows(4)
+                    ->visible(fn (Get $get): bool => $get('type') === 'textarea'),
+                TextInput::make('value')
+                    ->label(__('Image path / URL'))
+                    ->maxLength(255)
+                    ->visible(fn (Get $get): bool => $get('type') === 'image'),
+                Toggle::make('value')
+                    ->label(__('Enabled'))
+                    ->visible(fn (Get $get): bool => $get('type') === 'checkbox'),
                 TextInput::make('group_name')
                     ->default('general')
                     ->maxLength(255)
