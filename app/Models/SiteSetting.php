@@ -12,6 +12,7 @@ class SiteSetting extends Model
     {
         return [
             'sort_order' => 'integer',
+            'details' => 'array',
         ];
     }
 }

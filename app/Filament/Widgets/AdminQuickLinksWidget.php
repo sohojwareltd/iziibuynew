@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Pages\RetailerWithdrawalsPage;
 use App\Filament\Pages\ServerStatusPage;
+use App\Filament\Pages\SiteSettingsPage;
 use App\Filament\Resources\Changelogs\ChangelogResource;
 use App\Filament\Resources\Charges\ChargeResource;
 use App\Filament\Resources\CmsMenuItems\CmsMenuItemResource;
@@ -22,7 +23,6 @@ use App\Filament\Resources\RetailerEarnings\RetailerEarningResource;
 use App\Filament\Resources\RetailerMetas\RetailerMetaResource;
 use App\Filament\Resources\Shops\ShopResource;
 use App\Filament\Resources\SitePlugins\SitePluginResource;
-use App\Filament\Resources\SiteSettings\SiteSettingResource;
 use App\Filament\Resources\SubscriptionCharges\SubscriptionChargeResource;
 use App\Filament\Resources\Tickets\TicketResource;
 use App\Filament\Resources\Users\UserResource;
@@ -54,7 +54,7 @@ class AdminQuickLinksWidget extends Widget
             ['label' => __('Tickets'), 'url' => TicketResource::getUrl()],
             ['label' => __('Languages'), 'url' => LanguageResource::getUrl()],
             ['label' => __('Enterprise onboarding'), 'url' => EnterpriseOnboardingResource::getUrl()],
-            ['label' => __('Settings'), 'url' => SiteSettingResource::getUrl()],
+            ['label' => __('Settings'), 'url' => SiteSettingsPage::getUrl()],
             ['label' => __('Posts'), 'url' => PostResource::getUrl()],
             ['label' => __('Pages'), 'url' => PageResource::getUrl()],
             ['label' => __('Post categories'), 'url' => PostCategoryResource::getUrl()],

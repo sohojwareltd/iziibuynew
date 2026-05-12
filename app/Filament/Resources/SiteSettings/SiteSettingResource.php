@@ -9,14 +9,16 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Support\Components\Utilities\Get;
-use Filament\Support\Components\Utilities\Set;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
@@ -29,6 +31,8 @@ class SiteSettingResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'site';
 
     protected static ?int $navigationSort = 5;
+
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $navigationLabel = 'Settings';
 
@@ -52,28 +56,64 @@ class SiteSettingResource extends Resource
                     ->maxLength(255),
                 Select::make('type')
                     ->options([
-                        'text' => __('Single line'),
-                        'textarea' => __('Multi line'),
-                        'image' => __('Image path / URL'),
-                        'checkbox' => __('On / off (stored as 0 or 1)'),
+                        'text' => __('Text'),
+                        'textarea' => __('Text Area'),
+                        'number' => __('Number'),
+                        'checkbox' => __('Checkbox'),
+                        'file' => __('File'),
+                        'image' => __('Image'),
+                        'select_dropdown' => __('Select Dropdown'),
                     ])
                     ->required()
                     ->default('text')
                     ->live()
                     ->afterStateUpdated(fn (Set $set) => $set('value', null)),
+
+                KeyValue::make('details')
+                    ->label(__('Dropdown Options'))
+                    ->keyLabel(__('Value'))
+                    ->valueLabel(__('Label'))
+                    ->addActionLabel(__('Add Option'))
+                    ->visible(fn (Get $get): bool => $get('type') === 'select_dropdown'),
+
                 TextInput::make('value')
+                    ->label(__('Value'))
                     ->maxLength(255)
-                    ->visible(fn (Get $get): bool => $get('type') === 'text'),
+                    ->visible(fn (Get $get): bool => $get('type') === 'text')
+                    ->dehydrated(fn (Get $get): bool => $get('type') === 'text'),
                 Textarea::make('value')
+                    ->label(__('Value'))
                     ->rows(4)
-                    ->visible(fn (Get $get): bool => $get('type') === 'textarea'),
+                    ->visible(fn (Get $get): bool => $get('type') === 'textarea')
+                    ->dehydrated(fn (Get $get): bool => $get('type') === 'textarea'),
                 TextInput::make('value')
-                    ->label(__('Image path / URL'))
-                    ->maxLength(255)
-                    ->visible(fn (Get $get): bool => $get('type') === 'image'),
-                Toggle::make('value')
+                    ->label(__('Value'))
+                    ->numeric()
+                    ->visible(fn (Get $get): bool => $get('type') === 'number')
+                    ->dehydrated(fn (Get $get): bool => $get('type') === 'number'),
+                Checkbox::make('value')
                     ->label(__('Enabled'))
-                    ->visible(fn (Get $get): bool => $get('type') === 'checkbox'),
+                    ->visible(fn (Get $get): bool => $get('type') === 'checkbox')
+                    ->dehydrated(fn (Get $get): bool => $get('type') === 'checkbox'),
+                FileUpload::make('value')
+                    ->label(__('File'))
+                    ->disk('public')
+                    ->directory('site-settings')
+                    ->visible(fn (Get $get): bool => $get('type') === 'file')
+                    ->dehydrated(fn (Get $get): bool => $get('type') === 'file'),
+                FileUpload::make('value')
+                    ->label(__('Image'))
+                    ->image()
+                    ->disk('public')
+                    ->directory('site-settings')
+                    ->visible(fn (Get $get): bool => $get('type') === 'image')
+                    ->dehydrated(fn (Get $get): bool => $get('type') === 'image'),
+                Select::make('value')
+                    ->label(__('Value'))
+                    ->options(fn (Get $get): array => $get('details') ?? [])
+                    ->visible(fn (Get $get): bool => $get('type') === 'select_dropdown')
+                    ->dehydrated(fn (Get $get): bool => $get('type') === 'select_dropdown'),
+
                 TextInput::make('group_name')
                     ->default('general')
                     ->maxLength(255)
