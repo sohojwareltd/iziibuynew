@@ -64,7 +64,7 @@
 
                     {{-- <button aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler"
                         data-target=".navbar-collapse" data-toggle="collapse" type="button">
-                        <img alt="Navbar Toggler Open Icon" class="navbar-toggler-open icon icon-sm" data-inject-svg
+                        <img alt="Navbar Toggler Open Icon" class="na pvbar-toggler-open icon icon-sm" data-inject-svg
                             src="{{ asset('frontend-asset/img/icons/interface/icon-menu.svg') }}">
                         <img alt="Navbar Toggler Close Icon" class="navbar-toggler-close icon icon-sm" data-inject-svg
                             src="{{ asset('frontend-asset/img/icons/interface/icon-x.svg') }}">
