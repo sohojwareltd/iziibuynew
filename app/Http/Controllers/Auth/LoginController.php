@@ -50,21 +50,22 @@ class LoginController extends Controller
             session()->forget('mailchimp_group');
         }
         $role = Auth::user()->role_id;
-      
+
         if ($role == 1) {
-            return redirect(route('voyager.dashboard'));
+            return redirect(route('filament.admin.pages.dashboard'));
         } elseif ($role == 2) {
             if (session()->has('login_redirect')) {
 
                 return redirect(session()->get('login_redirect'));
             }
             if ($role == 2 && session()->has('login_redirect')) {
-    
+
                 return redirect(session()->get('login_redirect'));
             }
             if (session()->has('user_name')) {
                 return redirect(route('shop.home', ['user_name' => session('user_name')]));
             }
+
             return redirect(route('home'));
         } elseif ($role == 3) {
             return redirect(route('shop.dashboard'));
@@ -84,7 +85,7 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        $url =   session()->get('login_redirect') ?? '/';
+        $url = session()->get('login_redirect') ?? '/';
 
         $this->guard()->logout();
         $request->session()->invalidate();
