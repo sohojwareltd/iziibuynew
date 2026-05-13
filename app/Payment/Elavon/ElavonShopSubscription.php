@@ -4,6 +4,7 @@ namespace App\Payment\Elavon;
 
 use App\Elavon\Converge2\Client\ClientConfig;
 use App\Elavon\Converge2\Converge2;
+use App\Elavon\Converge2\DataObject\Resource\Endpoint;
 use App\Elavon\Converge2\Response\PaymentSessionResponse;
 use App\Elavon\Converge2\Response\ShopperResponse;
 use App\Elavon\Converge2\Response\StoredCardResponse;
@@ -22,11 +23,35 @@ class ElavonShopSubscription
      */
     protected array $convergeKeys;
 
+    /**
+     * Converge2 REST base URL (matches TaxiOnline / Elavon docs for resource hrefs).
+     */
+    protected string $apiBase;
+
     public function __construct(Shop $shop)
     {
         $this->shop = $shop;
         $this->convergeKeys = $this->resolveConvergeKeys();
+        $this->apiBase = $this->convergeKeys['sandbox']
+            ? 'https://uat.api.converge.eu.elavonaws.com'
+            : 'https://api.converge.eu.elavonaws.com';
         $this->elavon = new Converge2($this->config());
+    }
+
+    /**
+     * Full resource URL for API payloads (e.g. storedCard on sale), or passthrough if already absolute.
+     */
+    protected function convergeResourceUrl(string $collection, string $idOrHref): string
+    {
+        $value = trim($idOrHref);
+        if ($value === '') {
+            return '';
+        }
+        if (str_contains($value, '://')) {
+            return $value;
+        }
+
+        return rtrim($this->apiBase, '/').'/'.$collection.'/'.$value;
     }
 
     /**
@@ -158,7 +183,7 @@ class ElavonShopSubscription
             ],
             'createdBy' => env('APP_NAME'),
             'orderReference' => uniqid(),
-            'storedCard' => $this->shop->subscription_id,
+            'storedCard' => $this->convergeResourceUrl(Endpoint::STORED_CARD, (string) $this->shop->subscription_id),
         ];
     }
 
@@ -430,8 +455,24 @@ class ElavonShopSubscription
             $parsedHosted,
         ])));
 
-        foreach ($shopperCandidates as $shopper) {
-            foreach ($hostedCandidates as $hosted) {
+        $shopperPayloads = [];
+        foreach ($shopperCandidates as $c) {
+            foreach ($this->convergeShopperPayloadCandidates((string) $c) as $p) {
+                $shopperPayloads[] = $p;
+            }
+        }
+        $shopperPayloads = array_values(array_unique(array_filter($shopperPayloads)));
+
+        $hostedPayloads = [];
+        foreach ($hostedCandidates as $c) {
+            foreach ($this->convergeHostedCardPayloadCandidates((string) $c) as $p) {
+                $hostedPayloads[] = $p;
+            }
+        }
+        $hostedPayloads = array_values(array_unique(array_filter($hostedPayloads)));
+
+        foreach ($shopperPayloads as $shopper) {
+            foreach ($hostedPayloads as $hosted) {
                 /** @var StoredCardResponse $response */
                 $response = $this->elavon->createStoredCard([
                     'shopper' => $shopper,
@@ -460,6 +501,44 @@ class ElavonShopSubscription
         }
 
         return '';
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function convergeShopperPayloadCandidates(string $ref): array
+    {
+        $ref = trim($ref);
+        if ($ref === '') {
+            return [];
+        }
+        if (str_contains($ref, '://')) {
+            return array_values(array_unique(array_filter([$ref, $this->parseUrl($ref)])));
+        }
+
+        return array_values(array_unique(array_filter([
+            $ref,
+            $this->convergeResourceUrl(Endpoint::SHOPPER, $ref),
+        ])));
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function convergeHostedCardPayloadCandidates(string $ref): array
+    {
+        $ref = trim($ref);
+        if ($ref === '') {
+            return [];
+        }
+        if (str_contains($ref, '://')) {
+            return array_values(array_unique(array_filter([$ref, $this->parseUrl($ref)])));
+        }
+
+        return array_values(array_unique(array_filter([
+            $ref,
+            $this->convergeResourceUrl(Endpoint::HOSTED_CARD, $ref),
+        ])));
     }
 
     /**
