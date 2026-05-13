@@ -59,8 +59,11 @@ trait ElavonSubscriptionServiceTrait
             $charge_status = (new ElavonShopSubscription($this->shop))->chargeViaCard($amount);
 
             if ($charge_status['status'] && ($charge_status['data']['status'] ?? false)) {
+try {
                 Mail::to($this->shop->user->email)->send(new ShopInvoice($this->shop));
-
+            } catch (Exception $e) {
+                Log::error('Error sending shop invoice: ' . $e->getMessage());
+            }
                 Charge::create([
                     'shop_id' => $this->shop->id,
                     'order_id' => $charge_status['data']['id'],
