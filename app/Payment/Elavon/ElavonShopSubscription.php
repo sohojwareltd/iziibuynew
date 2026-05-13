@@ -5,8 +5,10 @@ namespace App\Payment\Elavon;
 use App\Elavon\Converge2\Client\ClientConfig;
 use App\Elavon\Converge2\Converge2;
 use App\Elavon\Converge2\Response\PaymentSessionResponse;
+use App\Elavon\Converge2\Response\StoredCardResponse;
 use App\Elavon\Converge2\Response\ShopperResponse;
 use App\Models\Shop;
+use Illuminate\Support\Facades\Log;
 use Iziibuy;
 
 class ElavonShopSubscription
@@ -260,7 +262,7 @@ class ElavonShopSubscription
      */
     public function finalizeHostedSubscriptionFromSession(string $sessionId): array
     {
-        $session = $this->elavon->getPaymentSession($sessionId);
+        $session = $this->loadPaymentSessionWithRetry($sessionId);
         if (! $session->isSuccess()) {
             return [
                 'status' => false,
@@ -268,15 +270,22 @@ class ElavonShopSubscription
             ];
         }
 
+        $shopperId = $this->resolveShopperIdFromPaymentSession($session);
+
         $cardId = $this->resolveStoredCardIdFromPaymentSession($session);
+        if ($cardId === '') {
+            $hostedCardRef = $this->resolveHostedCardReferenceFromPaymentSession($session);
+            if ($hostedCardRef !== '' && $shopperId !== '') {
+                $cardId = $this->createStoredCardIdFromHostedInstrument($shopperId, $hostedCardRef);
+            }
+        }
+
         if ($cardId === '') {
             return [
                 'status' => false,
                 'data' => ['message' => 'Card was not saved. Complete payment on the hosted page, or try again.'],
             ];
         }
-
-        $shopperId = $this->resolveShopperIdFromPaymentSession($session);
 
         $this->shop->subscription_id = $cardId;
         if ($shopperId !== '') {
@@ -289,6 +298,33 @@ class ElavonShopSubscription
             'status' => true,
             'data' => ['cardId' => $cardId],
         ];
+    }
+
+    /**
+     * Hosted checkout can take a short time to attach transaction / card links.
+     */
+    protected function loadPaymentSessionWithRetry(string $sessionId): PaymentSessionResponse
+    {
+        $attempts = 3;
+        $delayMicros = 400_000;
+        $last = $this->elavon->getPaymentSession($sessionId);
+
+        for ($i = 1; $i < $attempts; $i++) {
+            if (
+                $last->isSuccess()
+                && (
+                    $last->getStoredCard()
+                    || $last->getHostedCard()
+                    || $last->getTransaction()
+                )
+            ) {
+                return $last;
+            }
+            usleep($delayMicros);
+            $last = $this->elavon->getPaymentSession($sessionId);
+        }
+
+        return $last;
     }
 
     protected function resolveStoredCardIdFromPaymentSession(PaymentSessionResponse $session): string
@@ -339,6 +375,78 @@ class ElavonShopSubscription
         }
 
         return $this->parseUrl((string) $shopper);
+    }
+
+    /**
+     * Hosted checkout usually exposes a hostedCard (not storedCard) until vaulted.
+     */
+    protected function resolveHostedCardReferenceFromPaymentSession(PaymentSessionResponse $session): string
+    {
+        $href = $session->getHostedCard();
+        if ($href) {
+            return (string) $href;
+        }
+
+        $txHref = $session->getTransaction();
+        if (! $txHref) {
+            return '';
+        }
+
+        $tx = $this->elavon->getTransaction($this->parseUrl((string) $txHref));
+        if (! $tx->isSuccess()) {
+            return '';
+        }
+
+        $hosted = $tx->getHostedCard();
+        if (! $hosted) {
+            return '';
+        }
+
+        return (string) $hosted;
+    }
+
+    /**
+     * Create a stored-card token from a hosted-card reference (post-HPP).
+     */
+    protected function createStoredCardIdFromHostedInstrument(string $shopperId, string $hostedCardReference): string
+    {
+        $parsedHosted = $this->parseUrl($hostedCardReference);
+        $shopperCandidates = array_values(array_unique(array_filter([
+            $shopperId,
+            $this->shop->shopperId,
+        ])));
+
+        $hostedCandidates = array_values(array_unique(array_filter([
+            $parsedHosted,
+            $hostedCardReference,
+        ])));
+
+        foreach ($shopperCandidates as $shopper) {
+            foreach ($hostedCandidates as $hosted) {
+                /** @var StoredCardResponse $response */
+                $response = $this->elavon->createStoredCard([
+                    'shopper' => $shopper,
+                    'hostedCard' => $hosted,
+                ]);
+
+                if ($response->isSuccess()) {
+                    return $response->getId();
+                }
+
+                $message = '';
+                foreach ($response->getData()->failures ?? [] as $failure) {
+                    $message .= ' | '.$failure->getDescription();
+                }
+                Log::warning('Elavon shop subscription: createStoredCard from hostedCard failed', [
+                    'shop_id' => $this->shop->id,
+                    'shopper' => $shopper,
+                    'hostedCard' => $hosted,
+                    'message' => trim($message, ' |'),
+                ]);
+            }
+        }
+
+        return '';
     }
 
     /**
