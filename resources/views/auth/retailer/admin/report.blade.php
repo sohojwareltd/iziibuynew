@@ -89,7 +89,7 @@
                                     <td>
                                         @if ($sell->shop)
                                             <a
-                                                href="{{ route('voyager.shops.show', $sell->shop_id) }}">{{ $sell->shop->user_name }}</a>
+                                                href="{{ \App\Filament\Resources\Shops\ShopResource::getUrl(panel: 'admin') }}">{{ $sell->shop->user_name }}</a>
                                         @else
                                             <span>N/A</span>
                                         @endif

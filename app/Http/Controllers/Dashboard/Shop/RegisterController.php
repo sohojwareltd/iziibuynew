@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Dashboard\Shop;
 
+use App\Filament\Resources\Shops\ShopResource;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ShopRegisterRequest;
-use App\Jobs\ShopWelcomeEmail;
 use App\Mail\NotificationEmail;
 use App\Mail\ServiceSubscriptionMail;
 use App\Mail\ShopInvoice;
@@ -12,7 +12,6 @@ use App\Mail\WelcomeEmail;
 use App\Models\Charge;
 use App\Models\Shop;
 use App\Models\User;
-use App\Payment\Elavon\ElavonShopSubscription;
 use App\Payment\Subscribe;
 use App\Rules\CreditCardValidation;
 use App\Services\RetailerCommission;
@@ -20,7 +19,6 @@ use App\Services\Subscription\ShopSubscriptionService;
 use Error;
 use Exception;
 use Illuminate\Contracts\Auth\Guard;
-use Iziibuy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -28,11 +26,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
-use QuickPay\QuickPay;
+use Iziibuy;
 
 class RegisterController extends Controller
 {
-
     /**
      * This method return shop register page as response
      *
@@ -43,7 +40,7 @@ class RegisterController extends Controller
         if (
             request()->filled('refferal') &&
             User::where('role_id', 5)->where('id', request()->refferal)->count() &&
-            !Session::has('refferal')
+            ! Session::has('refferal')
         ) {
             Session::put('refferal', request()->refferal);
         }
@@ -72,17 +69,17 @@ class RegisterController extends Controller
                 'establishment_cost' => setting('payment.estibliment_cost') ? setting('payment.estibliment_cost') : 1995,
                 'monthly_cost' => setting('payment.price_per_shop') ? setting('payment.price_per_shop') : 299,
                 'service_establishment_cost' => setting('payment.service_establishment_cost') ? setting('payment.service_establishment_cost') : 1995,
-                'service_monthly_fee' => setting('payment.service_monthly_cost')  ? setting('payment.service_monthly_cost') : 299,
+                'service_monthly_fee' => setting('payment.service_monthly_cost') ? setting('payment.service_monthly_cost') : 299,
                 'per_user_fee' => setting('payment.price_per_user') ? setting('payment.price_per_user') : 99,
                 'terms' => setting('terms.no'),
-                'subscriptionMethod' => 'quickpay'
+                'subscriptionMethod' => 'quickpay',
             ]);
 
             $shop->createMetas([
                 'name' => $request->company_name,
                 'company_name' => $request->company_name,
                 'title' => $request->title,
-                'logo'  => 'defaults/shop_default_logo.png',
+                'logo' => 'defaults/shop_default_logo.png',
                 'shop_color' => '#203864',
                 'shop_bottom_color' => '#203864',
                 'header_color' => '#96afe8',
@@ -103,26 +100,26 @@ class RegisterController extends Controller
             ]);
 
             $user->update([
-                'shop_id'   => $user->shop->id,
+                'shop_id' => $user->shop->id,
             ]);
 
             return $user;
         });
-        $message = $user->name . ' ' . $user->last_name . ' has created new shop ' . $user->shop_name;
+        $message = $user->name.' '.$user->last_name.' has created new shop '.$user->shop_name;
         $mail_data = [
             'subject' => 'New shop registered',
             'body' => $message,
-            'button_link' => route('voyager.shops.edit', $user->shop->id),
+            'button_link' => ShopResource::getUrl(panel: 'admin'),
             'button_text' => 'View Shop',
             'emails' => [],
         ];
 
         Mail::to(setting('site.email'))->send(new NotificationEmail($mail_data));
-        //send email to shop
+        // send email to shop
         $message = 'Welcome! <br>
          Thank you for signing up with us.<br>
          Your new account has been setup and you can now login to your area using the details below.<br>
-         Url For Your Shop: ' . route('shop.home', ['user_name' => $user->shop->user_name]) . '<br> Email Address: ' . $user->email . ' <br>Password: HIDDEN';
+         Url For Your Shop: '.route('shop.home', ['user_name' => $user->shop->user_name]).'<br> Email Address: '.$user->email.' <br>Password: HIDDEN';
         $mail_data = [
             'subject' => 'Thank you for creating new shop',
             'body' => $message,
@@ -132,7 +129,7 @@ class RegisterController extends Controller
         ];
 
         // Mail::to($user->email)->send(new WelcomeEmail(['email' => $user->email, 'url' => route('shop.home', ['user_name' => $user->shop->user_name]), 'password' => 'HIDDEN']));
-        //Mail::to($user->email)->send(new NotificationEmail($mail_data));
+        // Mail::to($user->email)->send(new NotificationEmail($mail_data));
 
         session()->forget('refferal');
 
@@ -149,7 +146,7 @@ class RegisterController extends Controller
             'user_name' => $request->user_name,
             'default_currency' => $request->default_currency,
             'currencies' => json_encode($request->currencies),
-            'selling_location_mode' => $request->selling_location_mode
+            'selling_location_mode' => $request->selling_location_mode,
         ]);
         $shop->createMetas($request->meta);
 
@@ -164,6 +161,7 @@ class RegisterController extends Controller
     public function completeProfile()
     {
         $shop = auth()->user()->shop;
+
         return view('dashboard.shop.profile-complete', compact('shop'));
     }
 
@@ -206,38 +204,42 @@ class RegisterController extends Controller
         } catch (Exception $e) {
             return redirect()->back()->withErrors($e->getMessage());
         }
+
         return redirect()->back()->withErrors('Something went wrong');
     }
+
     public function subscriptionIndex()
     {
         if (auth()->user()->role_id == 3) {
             return view('dashboard.shop.subscription');
         }
+
         return redirect(route('home'));
     }
+
     public function deleteAccount()
     {
         auth()->user()->delete();
+
         return redirect(route('home'))->withErrors('Account Deleted');
     }
+
     public function enrollSubscription()
     {
 
-
         $shop = auth()->user()->shop;
 
-        $api =  setting('payment.api_key');
+        $api = setting('payment.api_key');
         $quickPay = new Subscribe($api);
         if (request()->has('type')) {
             $shop->update([
-                'subscription_id' => null
+                'subscription_id' => null,
             ]);
         }
-        if (!request()->has('type') && $shop->subscription_id) {
+        if (! request()->has('type') && $shop->subscription_id) {
 
             $amount = Iziibuy::round_num($shop->subscriptionFee());
             $payment = $quickPay->subscription($shop->subscription_id)->charge($amount);
-
 
             if ($payment['status'] == true) {
 
@@ -247,11 +249,11 @@ class RegisterController extends Controller
                     if ($payment_check['status'] == true && $payment_check['data']->state == 'processed') {
                         $charge = Charge::create([
                             'shop_id' => $shop->id,
-                            'order_id' =>  $payment['data']->id,
+                            'order_id' => $payment['data']->id,
                             'amount' => $amount,
                             'status' => true,
                             'comment' => 'subscription fee',
-                            'details' => json_encode($shop->subscriptionFeeDetails())
+                            'details' => json_encode($shop->subscriptionFeeDetails()),
                         ]);
                     }
                 }
@@ -268,8 +270,10 @@ class RegisterController extends Controller
                 if ($shop->retailer_id) {
                     RetailerCommission::commission_from_recurring_payments($shop)->pay();
                 }
+
                 return redirect(route('shop.dashboard'));
             }
+
             return redirect(route('shop.subscription.payment'))->withErrors('There is a problem with your Payment method. Please try again later');
         }
         try {
@@ -279,19 +283,20 @@ class RegisterController extends Controller
                 $shop->payment_url = $subscription['data']['url'];
                 $shop->subscription_id = $subscription['data']['payment_id'];
                 $shop->save();
+
                 return redirect($shop->payment_url);
             } else {
                 throw new Exception('Subscription request failed');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect(route('shop.subscription.payment'))->withErrors('There is some problem with your payment. Please contact support');
         }
     }
+
     public function confirmSubscription($subscription_id)
     {
         $api = setting('payment.api_key');
         $quickPay = new Subscribe($api);
-
 
         $subscription = $quickPay->subscription($subscription_id)->get();
 
@@ -308,6 +313,7 @@ class RegisterController extends Controller
                 if ($shop->paid_at->isSameMonth(today())) {
                     $shop->status = 1;
                     $shop->establishment = 1;
+
                     return redirect(route('shop.dashboard'))->with('Thank your for subscribe');
                 }
             }
@@ -317,21 +323,21 @@ class RegisterController extends Controller
             $charge_status = $quickPay->subscription($subscription_id)->charge($amount);
 
             if ($charge_status['status']) {
-                $payment =  $quickPay->payment($charge_status['data']->id);
-                try{
+                $payment = $quickPay->payment($charge_status['data']->id);
+                try {
                     Mail::to($shop->user->email)->send(new ShopInvoice($shop));
-                }catch(Exception | Error $e){
-                    
+                } catch (Exception|Error $e) {
+
                 }
 
                 if ($payment['data']->state == 'processed') {
                     Charge::create([
                         'shop_id' => $shop->id,
-                        'order_id' =>  $charge_status['data']->id,
+                        'order_id' => $charge_status['data']->id,
                         'amount' => $amount,
                         'status' => true,
                         'comment' => 'subscription fee',
-                        'details' => json_encode($shop->subscriptionFeeDetails())
+                        'details' => json_encode($shop->subscriptionFeeDetails()),
                     ]);
                     if ($charge_status['data']->test_mode == false) {
                         $shop->is_demo = false;
@@ -353,8 +359,6 @@ class RegisterController extends Controller
             }
         }
 
-
-
         return redirect(route('shop.subscription.payment'))->withErrors('There is a problem with your Payment method. Please try again later');
     }
     //     public function confirmSubscription($subscription_id)
@@ -368,31 +372,35 @@ class RegisterController extends Controller
     {
         $shop = Auth::user()->shop;
 
+        if ($shop->can_provide_service) {
+            abort('403', 'You already subscribed for service');
+        }
 
-        if ($shop->can_provide_service) abort('403', 'You already subscribed for service');
         return view('dashboard.shop.subscribe', compact('shop'));
     }
+
     public function serviceSubscribe()
     {
         $shop = Auth::user()->shop;
 
-        if ($shop->can_provide_service) abort('403', 'You already subscribed for service');
+        if ($shop->can_provide_service) {
+            abort('403', 'You already subscribed for service');
+        }
         try {
 
             $fee = $shop->ServiceSubscriptionFee();
             $api = setting('payment.api_key');
             $quickPay = new Subscribe($api);
 
-
             $charge = $quickPay->subscription($shop->subscription_id)->charge($fee);
 
             if ($charge['status']) {
-                $payment =  $quickPay->payment($charge['data']->id);
+                $payment = $quickPay->payment($charge['data']->id);
 
                 if ($payment['data']->state == 'processed') {
                     Charge::create([
                         'shop_id' => $shop->id,
-                        'order_id' =>  $charge['data']->id,
+                        'order_id' => $charge['data']->id,
                         'amount' => $fee,
                         'status' => true,
                         'comment' => 'Service subscription',
@@ -407,7 +415,7 @@ class RegisterController extends Controller
 
             $shop->update([
                 'can_provide_service' => 1,
-                'service_establishment' => 1
+                'service_establishment' => 1,
             ]);
 
             return redirect()->route('shop.dashboard')->with('success', 'Now you can provide service');

@@ -21,7 +21,7 @@
         @endcan
         @can('edit', app($dataType->model_name))
             @if (!empty($dataType->order_column) && !empty($dataType->order_display_column))
-                <a href="{{ route('voyager.' . $dataType->slug . '.order') }}" class="btn btn-primary btn-add-new">
+                <a href="{{ filament_panel_url() }}" class="btn btn-primary btn-add-new">
                     <i class="voyager-list"></i> <span>{{ __('voyager::bread.order') }}</span>
                 </a>
             @endif
@@ -158,7 +158,7 @@
                                                     data-target="#withdrawModal">
                                                     Withdraw Balance</button>
                                                 </button>
-                                                <a href="{{ route('voyager.users.edit', $data->user->id) }}"
+                                                <a href="{{ \App\Filament\Resources\Users\UserResource::getUrl(panel: 'admin') }}"
                                                     class="btn btn-danger">
                                                     <i class="voyager-receipt"></i> <span>Edit Profile</span>
                                                 </a>
@@ -327,7 +327,7 @@
 
         var deleteFormAction;
         $('td').on('click', '.delete', function(e) {
-            $('#delete_form')[0].action = '{{ route('voyager.' . $dataType->slug . '.destroy', '__id') }}'.replace(
+            $('#delete_form')[0].action = '{{ filament_panel_url() }}'.replace(
                 '__id', $(this).data('id'));
             $('#delete_modal').modal('show');
         });
@@ -347,14 +347,14 @@
                             if ($(this).prop('checked')) {
                                 $('#dataTable').before('<a id="redir"
                                     href =
-                                    "{{ route('voyager.' . $dataType->slug . '.index', array_merge($params, ['showSoftDeleted' => 1]), true) }}" >
+                                    "{{ filament_panel_url() }}" >
                                     <
                                     /a>');
                                 }
                                 else {
                                     $('#dataTable').before('<a id="redir"
                                         href =
-                                        "{{ route('voyager.' . $dataType->slug . '.index', array_merge($params, ['showSoftDeleted' => 0]), true) }}" >
+                                        "{{ filament_panel_url() }}" >
                                         <
                                         /a>');
                                     }

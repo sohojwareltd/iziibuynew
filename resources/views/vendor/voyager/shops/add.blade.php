@@ -27,7 +27,7 @@ $add = is_null($dataTypeContent->getKey());
 
                 <div class="panel panel-bordered">
                     <!-- form start -->
-                    <form role="form" class="form-edit-add" action="{{ route('voyager.shops.store') }}" method="POST"
+                    <form role="form" class="form-edit-add" action="{{ filament_panel_url() }}" method="POST"
                         enctype="multipart/form-data">
                         {{ csrf_field() }}
 
@@ -182,7 +182,7 @@ $add = is_null($dataTypeContent->getKey());
             $('.form-group').on('click', '.remove-single-file', deleteHandler('a', false));
 
             $('#confirm_delete').on('click', function() {
-                $.post('{{ route('voyager.' . $dataType->slug . '.media.remove') }}', params, function(
+                $.post('{{ filament_panel_url() }}', params, function(
                     response) {
                     if (response &&
                         response.data &&

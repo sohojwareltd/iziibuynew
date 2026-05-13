@@ -28,7 +28,7 @@
                 <div class="panel panel-bordered">
                     <!-- form start -->
                     <form role="form" class="form-edit-add"
-                        action="{{ $edit ? route('voyager.' . $dataType->slug . '.update', $dataTypeContent->getKey()) : route('voyager.' . $dataType->slug . '.store') }}"
+                        action="{{ $edit ? filament_panel_url() : filament_panel_url() }}"
                         method="POST" enctype="multipart/form-data">
                         <!-- PUT Method if we are editing -->
                         @if ($edit)
@@ -187,7 +187,7 @@
                 </form>
 
                 <div style="display:none">
-                    <input type="hidden" id="upload_url" value="{{ route('voyager.upload') }}">
+                    <input type="hidden" id="upload_url" value="{{ filament_panel_url() }}">
                     <input type="hidden" id="upload_type_slug" value="{{ $dataType->slug }}">
                 </div>
             </div>
@@ -277,7 +277,7 @@
         $('.form-group').on('click', '.remove-single-file', deleteHandler('a', false));
 
         $('#confirm_delete').on('click', function() {
-            $.post('{{ route('voyager.' . $dataType->slug . '.media.remove') }}', params, function(
+            $.post('{{ filament_panel_url() }}', params, function(
                 response) {
                 if (response &&
                     response.data &&

@@ -36,12 +36,12 @@
         <i class="{{ $dataType->icon }}"></i> Orders &nbsp;
 
         @can('edit', $dataTypeContent)
-            <a href="{{ route('voyager.' . $dataType->slug . '.edit', $dataTypeContent->getKey()) }}" class="btn btn-info">
+            <a href="{{ filament_panel_url() }}" class="btn btn-info">
                 <span class="glyphicon glyphicon-pencil"></span>&nbsp;
                 Edit
             </a>
         @endcan
-        <a href="{{ route('voyager.' . $dataType->slug . '.index') }}" class="btn btn-warning">
+        <a href="{{ filament_panel_url() }}" class="btn btn-warning">
             <span class="glyphicon glyphicon-list"></span>&nbsp;
             Order List
         </a>
@@ -321,7 +321,7 @@
             <div class="d-flex ">
                 <a href="" class="btn btn-default gap-4"> Trail</a>
                 @foreach ($datas as $key=>$data)
-                    <a href="{{ route('voyager.charges.show', [$dataTypeContent, 'mode' => $key]) }}" class=" gap-4">
+                    <a href="{{ \App\Filament\Resources\Charges\ChargeResource::getUrl(panel: 'admin') }}" class=" gap-4">
                         <div class='card auth-card-2 @if ($transiction->type == $data->type) active-footer @endif'>
                             <p class="auth-title text-muted">{{ ucfirst($data->type) }} <span class="ms-3"> <span
                                         class="glyphicon glyphicon-dashboard"></span>

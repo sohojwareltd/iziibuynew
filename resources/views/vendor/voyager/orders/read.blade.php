@@ -8,12 +8,12 @@
         <i class="{{ $dataType->icon }}"></i> Orders &nbsp;
 
         @can('edit', $dataTypeContent)
-            <a href="{{ route('voyager.' . $dataType->slug . '.edit', $dataTypeContent->getKey()) }}" class="btn btn-info">
+            <a href="{{ filament_panel_url() }}" class="btn btn-info">
                 <span class="glyphicon glyphicon-pencil"></span>&nbsp;
                 Edit
             </a>
         @endcan
-        <a href="{{ route('voyager.' . $dataType->slug . '.index') }}" class="btn btn-warning">
+        <a href="{{ filament_panel_url() }}" class="btn btn-warning">
             <span class="glyphicon glyphicon-list"></span>&nbsp;
             Order List
         </a>

@@ -463,7 +463,7 @@
             getFiles: function() {
                 var vm = this;
                 vm.is_loading = true;
-                $.post('{{ route('voyager.media.files') }}', { folder: vm.current_folder, _token: '{{ csrf_token() }}', details: vm.details }, function(data) {
+                $.post('{{ filament_panel_url() }}', { folder: vm.current_folder, _token: '{{ csrf_token() }}', details: vm.details }, function(data) {
                     vm.files = [];
                     for (var i = 0, file; file = data[i]; i++) {
                         if (vm.filter(file)) {
@@ -647,7 +647,7 @@
                 if (!this.allowRename || vm.selected_file.name == object.target.value) {
                     return;
                 }
-                $.post('{{ route('voyager.media.rename') }}', {
+                $.post('{{ filament_panel_url() }}', {
                     folder_location: vm.current_folder,
                     filename: vm.selected_file.name,
                     new_filename: object.target.value,
@@ -667,7 +667,7 @@
                 }
                 var vm = this;
                 var name = this.modals.new_folder.name;
-                $.post('{{ route('voyager.media.new_folder') }}', { new_folder: vm.current_folder+'/'+name, _token: '{{ csrf_token() }}' }, function(data) {
+                $.post('{{ filament_panel_url() }}', { new_folder: vm.current_folder+'/'+name, _token: '{{ csrf_token() }}' }, function(data) {
 					if(data.success == true){
 						toastr.success('{{ __('voyager::generic.successfully_created') }} ' + name, "{{ __('voyager::generic.sweet_success') }}");
 						vm.getFiles();
@@ -683,7 +683,7 @@
                     return;
                 }
                 var vm = this;
-                $.post('{{ route('voyager.media.delete') }}', {
+                $.post('{{ filament_panel_url() }}', {
                     path: vm.current_folder,
                     files: vm.selected_files,
                     _token: '{{ csrf_token() }}'
@@ -709,7 +709,7 @@
                     return;
                 }
                 $('#move_files_modal_'+vm._uid).modal('hide');
-				$.post('{{ route('voyager.media.move') }}', {
+				$.post('{{ filament_panel_url() }}', {
                     path: vm.current_folder,
                     files: vm.selected_files,
                     destination: destination,
@@ -741,7 +741,7 @@
 
                 var vm = this;
                 var postData = Object.assign(croppedData, { _token: '{{ csrf_token() }}' });
-				$.post('{{ route('voyager.media.crop') }}', postData, function(data) {
+				$.post('{{ filament_panel_url() }}', postData, function(data) {
 					if (data.success) {
 						toastr.success(data.message);
 						vm.getFiles();
@@ -845,7 +845,7 @@
             if (this.allowUpload && !dropzone.hasClass('dz-clickable')) {
                 dropzone.dropzone({
                     timeout: 180000,
-                    url: '{{ route('voyager.media.upload') }}',
+                    url: '{{ filament_panel_url() }}',
                     previewsContainer: "#uploadPreview",
                     totaluploadprogress: function(uploadProgress, totalBytes, totalBytesSent) {
                         progress_bar.css('width', uploadProgress + '%');

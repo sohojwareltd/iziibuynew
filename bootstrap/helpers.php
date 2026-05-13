@@ -1,6 +1,9 @@
 <?php
 
 declare(strict_types=1);
+use App\Providers\Filament\AdminPanelProvider;
+use App\Support\SiteSettings;
+use Filament\Facades\Filament;
 
 if (! function_exists('setting')) {
     /**
@@ -10,7 +13,22 @@ if (! function_exists('setting')) {
     function setting(string $key, mixed $default = null): mixed
     {
         return config("settings.{$key}")
-            ?? \App\Support\SiteSettings::get($key)
+            ?? SiteSettings::get($key)
             ?? $default;
+    }
+}
+
+if (! function_exists('filament_panel_url')) {
+    /**
+     * Absolute URL under the default Filament admin panel (see {@see AdminPanelProvider}).
+     * Replaces legacy `route('voyager.*')` links after Voyager was removed.
+     */
+    function filament_panel_url(string $path = ''): string
+    {
+        $panel = Filament::getPanel('admin');
+        $base = rtrim($panel->getUrl(), '/');
+        $path = ltrim($path, '/');
+
+        return $path === '' ? $base : "{$base}/{$path}";
     }
 }

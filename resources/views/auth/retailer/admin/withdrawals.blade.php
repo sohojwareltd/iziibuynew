@@ -294,7 +294,7 @@
                                                             onclick="message(this,{{ $withdrawal->user->hasBankAccount() }})">Approve</a>
                                                     @else
                                                         <a target="_blank" class="btn btn-danger"
-                                                            href="{{ route('voyager.retailer-metas.edit', [$withdrawal->user->retailer->id]) }}">Update
+                                                            href="{{ \App\Filament\Resources\RetailerMetas\RetailerMetaResource::getUrl('edit', ['record' => $withdrawal->user->retailer->id], panel: 'admin') }}">Update
                                                             Bank account</a>
                                                     @endif
                                                     <a href="{{ route('admin.retailer.withdraw.cancel', $withdrawal) }}"

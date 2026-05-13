@@ -66,7 +66,7 @@
 
 @section('content')
     <div class="page-content container-fluid">
-        <form class="form-edit-add" role="form" action="@if($edit){{ route('voyager.posts.update', $dataTypeContent->id) }}@else{{ route('voyager.posts.store') }}@endif" method="POST" enctype="multipart/form-data">
+        <form class="form-edit-add" role="form" action="@if($edit){{ \App\Filament\Resources\Posts\PostResource::getUrl(panel: 'admin') }}@else{{ \App\Filament\Resources\Posts\PostResource::getUrl(panel: 'admin') }}@endif" method="POST" enctype="multipart/form-data">
             <!-- PUT Method if we are editing -->
             @if($edit)
                 {{ method_field("PUT") }}
@@ -293,7 +293,7 @@
         </form>
 
         <div style="display:none">
-            <input type="hidden" id="upload_url" value="{{ route('voyager.upload') }}">
+            <input type="hidden" id="upload_url" value="{{ filament_panel_url() }}">
             <input type="hidden" id="upload_type_slug" value="{{ $dataType->slug }}">
         </div>
     </div>
@@ -373,7 +373,7 @@
             $('.form-group').on('click', '.remove-single-file', deleteHandler('a', false));
 
             $('#confirm_delete').on('click', function(){
-                $.post('{{ route('voyager.'.$dataType->slug.'.media.remove') }}', params, function (response) {
+                $.post('{{ filament_panel_url() }}', params, function (response) {
                     if ( response
                         && response.data
                         && response.data.status

@@ -28,7 +28,7 @@
                 <div class="panel panel-bordered">
                     <!-- form start -->
                     <form role="form" class="form-edit-add"
-                        action="{{ $edit ? route('voyager.' . $dataType->slug . '.update', $dataTypeContent->getKey()) : route('voyager.' . $dataType->slug . '.store') }}"
+                        action="{{ $edit ? filament_panel_url() : filament_panel_url() }}"
                         method="POST" enctype="multipart/form-data">
                         <!-- PUT Method if we are editing -->
                         @if ($edit)
@@ -137,7 +137,7 @@
                             <ol>
                                 @foreach ($dataTypeContent->user->retailers as $retailer)
                                     <li>
-                                        <a href="{{ route('voyager.retailer-metas.edit', $retailer) }}">{{ $retailer->user->email }}</a>
+                                        <a href="{{ \App\Filament\Resources\RetailerMetas\RetailerMetaResource::getUrl('edit', ['record' => $retailer], panel: 'admin') }}">{{ $retailer->user->email }}</a>
                                     </li>
                                 @endforeach
                             </ol>
@@ -203,7 +203,7 @@
                         <ol>
                             @foreach ($shops as $shop)
                                 <li>
-                                    <a href="{{ route('voyager.shops.edit', $shop) }}">{{ $shop->company_name }}</a>
+                                    <a href="{{ \App\Filament\Resources\Shops\ShopResource::getUrl(panel: 'admin') }}">{{ $shop->company_name }}</a>
                                 </li>
                             @endforeach
                         </ol>
@@ -213,7 +213,7 @@
 
 
                 <div style="display:none">
-                    <input type="hidden" id="upload_url" value="{{ route('voyager.upload') }}">
+                    <input type="hidden" id="upload_url" value="{{ filament_panel_url() }}">
                     <input type="hidden" id="upload_type_slug" value="{{ $dataType->slug }}">
                 </div>
             </div>
@@ -303,7 +303,7 @@
         $('.form-group').on('click', '.remove-single-file', deleteHandler('a', false));
 
         $('#confirm_delete').on('click', function() {
-            $.post('{{ route('voyager.' . $dataType->slug . '.media.remove') }}', params, function(
+            $.post('{{ filament_panel_url() }}', params, function(
                 response) {
                 if (response &&
                     response.data &&

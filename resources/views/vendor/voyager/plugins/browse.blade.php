@@ -8,7 +8,7 @@
             <i class="{{ $dataType->icon }}"></i> {{ $dataType->getTranslatedAttribute('display_name_plural') }}
         </h1>
         @can('add', app($dataType->model_name))
-            <a href="{{ route('voyager.'.$dataType->slug.'.create') }}" class="btn btn-success btn-add-new">
+            <a href="{{ filament_panel_url() }}" class="btn btn-success btn-add-new">
                 <i class="voyager-plus"></i> <span>{{ __('voyager::generic.add_new') }}</span>
             </a>
         @endcan
@@ -17,7 +17,7 @@
         @endcan
         @can('edit', app($dataType->model_name))
             @if(!empty($dataType->order_column) && !empty($dataType->order_display_column))
-                <a href="{{ route('voyager.'.$dataType->slug.'.order') }}" class="btn btn-primary btn-add-new">
+                <a href="{{ filament_panel_url() }}" class="btn btn-primary btn-add-new">
                     <i class="voyager-list"></i> <span>{{ __('voyager::bread.order') }}</span>
                 </a>
             @endif
@@ -253,7 +253,7 @@
                                             </td>
                                         @endforeach
                                         <td class="no-sort no-click bread-actions">
-                                            <a class="btn btn-info" href="{{route('voyager.users.edit',$data->user_id)}}">Edit Owner Profile</a>
+                                            <a class="btn btn-info" href="{{\App\Filament\Resources\Users\UserResource::getUrl(panel: 'admin')}}">Edit Owner Profile</a>
                                             @foreach($actions as $action)
                                                 @if (!method_exists($action, 'massAction'))
                                                     @include('voyager::bread.partials.actions', ['action' => $action])
@@ -357,7 +357,7 @@
 
         var deleteFormAction;
         $('td').on('click', '.delete', function (e) {
-            $('#delete_form')[0].action = '{{ route('voyager.'.$dataType->slug.'.destroy', '__id') }}'.replace('__id', $(this).data('id'));
+            $('#delete_form')[0].action = '{{ filament_panel_url() }}'.replace('__id', $(this).data('id'));
             $('#delete_modal').modal('show');
         });
 
@@ -374,9 +374,9 @@
             $(function() {
                 $('#show_soft_deletes').change(function() {
                     if ($(this).prop('checked')) {
-                        $('#dataTable').before('<a id="redir" href="{{ (route('voyager.'.$dataType->slug.'.index', array_merge($params, ['showSoftDeleted' => 1]), true)) }}"></a>');
+                        $('#dataTable').before('<a id="redir" href="{{ (filament_panel_url()) }}"></a>');
                     }else{
-                        $('#dataTable').before('<a id="redir" href="{{ (route('voyager.'.$dataType->slug.'.index', array_merge($params, ['showSoftDeleted' => 0]), true)) }}"></a>');
+                        $('#dataTable').before('<a id="redir" href="{{ (filament_panel_url()) }}"></a>');
                     }
 
                     $('#redir')[0].click();

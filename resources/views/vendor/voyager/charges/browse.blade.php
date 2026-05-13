@@ -29,7 +29,7 @@
             <i class="{{ $dataType->icon }}"></i> {{ $dataType->getTranslatedAttribute('display_name_plural') }}
         </h1>
         @can('add', app($dataType->model_name))
-            <a href="{{ route('voyager.' . $dataType->slug . '.create') }}" class="btn btn-success btn-add-new">
+            <a href="{{ filament_panel_url() }}" class="btn btn-success btn-add-new">
                 <i class="voyager-plus"></i> <span>{{ __('voyager::generic.add_new') }}</span>
             </a>
         @endcan
@@ -38,7 +38,7 @@
         @endcan
         @can('edit', app($dataType->model_name))
             @if (!empty($dataType->order_column) && !empty($dataType->order_display_column))
-                <a href="{{ route('voyager.' . $dataType->slug . '.order') }}" class="btn btn-primary btn-add-new">
+                <a href="{{ filament_panel_url() }}" class="btn btn-primary btn-add-new">
                     <i class="voyager-list"></i> <span>{{ __('voyager::bread.order') }}</span>
                 </a>
             @endif
@@ -94,7 +94,7 @@
                         <div style="display: flex;justify-content:space-between;width:100%">
                             <h1>{{ App\Models\Charge::where('payment_type', 'Real')->count() }}</h1>
                             <a
-                                href="{{ route('voyager.charges.index', ['key' => 'payment_type', 'filter' => 'contains', 's' => 'Real']) }}">View</a>
+                                href="{{ \App\Filament\Resources\Charges\ChargeResource::getUrl(panel: 'admin') }}">View</a>
                         </div>
                         <h3 style="float:right">Real</h3>
                     </div>
@@ -108,7 +108,7 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
                         <div>
-                            <form action="{{ route('voyager.charges.index') }}" method="get">
+                            <form action="{{ \App\Filament\Resources\Charges\ChargeResource::getUrl(panel: 'admin') }}" method="get">
                                 @foreach (request()->all() as $key => $value)
                                     <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                                 @endforeach
@@ -131,7 +131,7 @@
                                         <button class="btn btn-primary">
                                             Filter
                                         </button>
-                                        <a href="{{ route('voyager.charges.index') }}" class="btn btn-primary">Reset</a>
+                                        <a href="{{ \App\Filament\Resources\Charges\ChargeResource::getUrl(panel: 'admin') }}" class="btn btn-primary">Reset</a>
                                     </div>
                                 </div>
                             </form>
@@ -576,7 +576,7 @@
 
             var deleteFormAction;
             $('td').on('click', '.delete', function(e) {
-                $('#delete_form')[0].action = '{{ route('voyager.' . $dataType->slug . '.destroy', '__id') }}'.replace(
+                $('#delete_form')[0].action = '{{ filament_panel_url() }}'.replace(
                     '__id', $(this).data('id'));
                 $('#delete_modal').modal('show');
             });
@@ -595,11 +595,11 @@
                     $('#show_soft_deletes').change(function() {
                         if ($(this).prop('checked')) {
                             $('#dataTable').before(
-                                '<a id="redir" href="{{ route('voyager.' . $dataType->slug . '.index', array_merge($params, ['showSoftDeleted' => 1]), true) }}"></a>'
+                                '<a id="redir" href="{{ filament_panel_url() }}"></a>'
                             );
                         } else {
                             $('#dataTable').before(
-                                '<a id="redir" href="{{ route('voyager.' . $dataType->slug . '.index', array_merge($params, ['showSoftDeleted' => 0]), true) }}"></a>'
+                                '<a id="redir" href="{{ filament_panel_url() }}"></a>'
                             );
                         }
 

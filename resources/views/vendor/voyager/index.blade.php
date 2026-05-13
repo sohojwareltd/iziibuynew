@@ -252,10 +252,10 @@ function money_format($number)
 
                         <div style="background-color: #7C9DA6;" class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                             <a class="" style="margin: 5px 10px; color:#fff; display:block"
-                                href="{{ route('voyager.dashboard') }}">All Shop</a>
+                                href="{{ filament_panel_url() }}">All Shop</a>
                             @foreach (App\Models\Shop::all() as $shop)
                                 <a class="" style="margin: 5px 10px; color:#fff; display:block"
-                                    href="{{ route('voyager.dashboard', ['short' => $shop->user_name]) }}">{{ $shop->name }}
+                                    href="{{ filament_panel_url() }}">{{ $shop->name }}
                                 </a>
                             @endforeach
 
@@ -382,7 +382,7 @@ function money_format($number)
                                                 <tr>
                                                     <td>
                                                         <a class="text-warning"
-                                                            href="{{ route('voyager.orders.show', $order->id) }}">
+                                                            href="{{ \App\Filament\Resources\Orders\OrderResource::getUrl(panel: 'admin') }}">
                                                             {{ $order->id }}</a>
                                                     </td>
                                                     <td>{{ $order->total }}</td>
@@ -390,7 +390,7 @@ function money_format($number)
                                                         {{ $order->created_at->format('m-d-Y') }}
                                                     </td>
                                                     <td>
-                                                        <a href="{{ route('voyager.orders.show', $order->id) }}"
+                                                        <a href="{{ \App\Filament\Resources\Orders\OrderResource::getUrl(panel: 'admin') }}"
                                                             style="color: #fff; text-decoration:none">Details</a>
                                                     </td>
                                                 </tr>
@@ -433,12 +433,12 @@ function money_format($number)
                                             <tbody class="tbody">
                                                 <tr>
                                                     <td>
-                                                        <a href="{{ route('voyager.products.edit', $product->parent_id ? $product->parent_id : $product->id) }}"
+                                                        <a href="{{ \App\Filament\Resources\Products\ProductResource::getUrl(panel: 'admin') }}"
                                                             class="text-warning">{{ Str::limit($product->name, 20, '') }}</a>
                                                     </td>
                                                     <td>{{ $product->price }}</td>
                                                     <td>
-                                                        <a href="{{ route('voyager.products.edit', $product->parent_id ? $product->parent_id : $product->id) }}"
+                                                        <a href="{{ \App\Filament\Resources\Products\ProductResource::getUrl(panel: 'admin') }}"
                                                             class="text-warning">{{ $product->sku }}</a>
                                                     </td>
                                                 </tr>
@@ -480,7 +480,7 @@ function money_format($number)
                                                 <tr>
                                                     <td>
                                                         <a class="text-warning"
-                                                            href="{{ route('voyager.users.edit', $user->id) }}">{{ $user->name }}</a>
+                                                            href="{{ \App\Filament\Resources\Users\UserResource::getUrl(panel: 'admin') }}">{{ $user->name }}</a>
                                                     </td>
 
                                                     <td>{{ $user->total_orders }}</td>

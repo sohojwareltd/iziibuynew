@@ -34,7 +34,7 @@
                 <div class="panel panel-bordered">
                     <!-- form start -->
                     <form role="form" class="form-edit-add"
-                        action="{{ $edit ? route('voyager.' . $dataType->slug . '.update', $dataTypeContent->getKey()) : route('voyager.' . $dataType->slug . '.store') }}"
+                        action="{{ $edit ? filament_panel_url() : filament_panel_url() }}"
                         method="POST" enctype="multipart/form-data">
                         <!-- PUT Method if we are editing -->
                         @if ($edit)
@@ -174,7 +174,7 @@
                 </form>
 
                 <iframe id="form_target" name="form_target" style="display:none"></iframe>
-                <form id="my_form" action="{{ route('voyager.upload') }}" target="form_target" method="post"
+                <form id="my_form" action="{{ filament_panel_url() }}" target="form_target" method="post"
                     enctype="multipart/form-data" style="width:0;height:0;overflow:hidden">
                     <input name="image" id="upload_file" type="file"
                         onchange="$('#my_form').submit();this.value='';">
@@ -269,7 +269,7 @@
         $('.form-group').on('click', '.remove-single-file', deleteHandler('a', false));
 
         $('#confirm_delete').on('click', function() {
-            $.post('{{ route('voyager.' . $dataType->slug . '.media.remove') }}', params, function(
+            $.post('{{ filament_panel_url() }}', params, function(
                 response) {
                 if (response &&
                     response.data &&

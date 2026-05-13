@@ -2,15 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Filament\Resources\Users\UserResource;
+use App\Mail\NotificationEmail;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Mail\NotificationEmail;
-use App\Models\User;
 use Illuminate\Support\Facades\Mail;
+
 class ClientWelcomeEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -24,7 +25,7 @@ class ClientWelcomeEmail implements ShouldQueue
 
     public function __construct(User $user)
     {
-       $this->user = $user;
+        $this->user = $user;
     }
 
     /**
@@ -34,11 +35,11 @@ class ClientWelcomeEmail implements ShouldQueue
      */
     public function handle()
     {
-        $message = $this->user->name .' '. $this->user->last_name .' has created new account';
+        $message = $this->user->name.' '.$this->user->last_name.' has created new account';
         $mail_data = [
             'subject' => 'New user has created account',
             'body' => $message,
-            'button_link' => route('voyager.users.edit', $this->user->id),
+            'button_link' => UserResource::getUrl(panel: 'admin'),
             'button_text' => 'View User',
             'emails' => [],
         ];

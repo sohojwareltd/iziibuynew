@@ -40,10 +40,10 @@
         <h1 class="page-title">
             <i class="voyager-receipt"></i> Invoice - Charge #{{ $charge->id }}
         </h1>
-        <a href="{{ route('voyager.' . $dataType->slug . '.show', $charge->id) }}" class="btn btn-warning">
+        <a href="{{ filament_panel_url() }}" class="btn btn-warning">
             <i class="voyager-eye"></i> View Details
         </a>
-        <a href="{{ route('voyager.' . $dataType->slug . '.index') }}" class="btn btn-info">
+        <a href="{{ filament_panel_url() }}" class="btn btn-info">
             <i class="voyager-list"></i> Back to List
         </a>
         <button onclick="window.print()" class="btn btn-primary">
