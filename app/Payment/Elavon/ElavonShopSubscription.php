@@ -331,12 +331,14 @@ class ElavonShopSubscription
         $cardId = $this->resolveStoredCardIdFromPaymentSession($session);
         if ($cardId === '') {
             $hostedCardRef = $this->resolveHostedCardReferenceFromPaymentSession($session);
+            if ($hostedCardRef !== '' && $shopperCandidates === []) {
+                $shopperCandidates = $this->shopperReferenceCandidatesFromNewShopperRecord();
+            }
             if ($hostedCardRef !== '' && $shopperCandidates !== []) {
                 $cardId = $this->createStoredCardIdFromHostedInstrument($shopperCandidates, $hostedCardRef);
             }
         }
 
-        dd($session, $shopperCandidates, $cardId, $hostedCardRef);
         if ($cardId === '') {
             return [
                 'status' => false,
@@ -469,6 +471,41 @@ class ElavonShopSubscription
 
         if (filled($this->shop->shopperId)) {
             $candidates[] = (string) $this->shop->shopperId;
+        }
+
+        return array_values(array_unique(array_filter($candidates)));
+    }
+
+    /**
+     * Converge often returns `shopper: null` on the payment session after HPP even when `hostedCard` is set.
+     * `createStoredCard` still requires a shopper reference, so create one from the shop profile.
+     *
+     * @return list<string>
+     */
+    protected function shopperReferenceCandidatesFromNewShopperRecord(): array
+    {
+        $shopper = $this->makeNewShopper();
+        if (! $shopper->isSuccess()) {
+            Log::warning('Elavon shop subscription: createShopper failed (no shopper on session for hosted-card vault)', [
+                'shop_id' => $this->shop->id,
+            ]);
+
+            return [];
+        }
+
+        $candidates = [];
+        $href = $shopper->getHref();
+        if ($href) {
+            $h = (string) $href;
+            $candidates[] = $h;
+            $id = $this->convergeEntityIdFromHrefOrId($h);
+            if ($id !== '' && $id !== $h) {
+                $candidates[] = $id;
+            }
+        }
+        $id = $shopper->getId();
+        if ($id) {
+            $candidates[] = (string) $id;
         }
 
         return array_values(array_unique(array_filter($candidates)));
