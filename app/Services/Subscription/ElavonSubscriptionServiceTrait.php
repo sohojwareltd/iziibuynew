@@ -62,7 +62,7 @@ trait ElavonSubscriptionServiceTrait
 try {
                 Mail::to($this->shop->user->email)->send(new ShopInvoice($this->shop));
             } catch (Exception $e) {
-                Log::error('Error sending shop invoice: ' . $e->getMessage());
+                Illuminate\Support\Facades\Log::error('Error sending shop invoice: ' . $e->getMessage());
             }
                 Charge::create([
                     'shop_id' => $this->shop->id,
