@@ -336,6 +336,7 @@ class ElavonShopSubscription
             }
         }
 
+        dd($session, $shopperCandidates, $cardId, $hostedCardRef);
         if ($cardId === '') {
             return [
                 'status' => false,
