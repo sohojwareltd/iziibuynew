@@ -5,8 +5,8 @@ namespace App\Payment\Elavon;
 use App\Elavon\Converge2\Client\ClientConfig;
 use App\Elavon\Converge2\Converge2;
 use App\Elavon\Converge2\Response\PaymentSessionResponse;
-use App\Elavon\Converge2\Response\StoredCardResponse;
 use App\Elavon\Converge2\Response\ShopperResponse;
+use App\Elavon\Converge2\Response\StoredCardResponse;
 use App\Models\Shop;
 use Illuminate\Support\Facades\Log;
 use Iziibuy;
@@ -270,13 +270,13 @@ class ElavonShopSubscription
             ];
         }
 
-        $shopperId = $this->resolveShopperIdFromPaymentSession($session);
+        $shopperCandidates = $this->shopperReferenceCandidatesFromPaymentSession($session);
 
         $cardId = $this->resolveStoredCardIdFromPaymentSession($session);
         if ($cardId === '') {
             $hostedCardRef = $this->resolveHostedCardReferenceFromPaymentSession($session);
-            if ($hostedCardRef !== '' && $shopperId !== '') {
-                $cardId = $this->createStoredCardIdFromHostedInstrument($shopperId, $hostedCardRef);
+            if ($hostedCardRef !== '' && $shopperCandidates !== []) {
+                $cardId = $this->createStoredCardIdFromHostedInstrument($shopperCandidates, $hostedCardRef);
             }
         }
 
@@ -288,8 +288,9 @@ class ElavonShopSubscription
         }
 
         $this->shop->subscription_id = $cardId;
-        if ($shopperId !== '') {
-            $this->shop->shopperId = $shopperId;
+        $primaryShopper = $shopperCandidates[0] ?? '';
+        if ($primaryShopper !== '') {
+            $this->shop->shopperId = $this->parseUrl($primaryShopper) ?: $primaryShopper;
         }
         $this->shop->payment_url = null;
         $this->shop->save();
@@ -352,29 +353,42 @@ class ElavonShopSubscription
         return $this->parseUrl((string) $stored);
     }
 
-    protected function resolveShopperIdFromPaymentSession(PaymentSessionResponse $session): string
+    /**
+     * @return list<string>
+     */
+    protected function shopperReferenceCandidatesFromPaymentSession(PaymentSessionResponse $session): array
     {
+        $candidates = [];
+
         $href = $session->getShopper();
         if ($href) {
-            return $this->parseUrl((string) $href);
+            $candidates[] = (string) $href;
+            $parsed = $this->parseUrl((string) $href);
+            if ($parsed !== '') {
+                $candidates[] = $parsed;
+            }
         }
 
         $txHref = $session->getTransaction();
-        if (! $txHref) {
-            return '';
+        if ($txHref) {
+            $tx = $this->elavon->getTransaction($this->parseUrl((string) $txHref));
+            if ($tx->isSuccess()) {
+                $shopper = $tx->getShopper();
+                if ($shopper) {
+                    $candidates[] = (string) $shopper;
+                    $parsed = $this->parseUrl((string) $shopper);
+                    if ($parsed !== '') {
+                        $candidates[] = $parsed;
+                    }
+                }
+            }
         }
 
-        $tx = $this->elavon->getTransaction($this->parseUrl((string) $txHref));
-        if (! $tx->isSuccess()) {
-            return '';
+        if (filled($this->shop->shopperId)) {
+            $candidates[] = (string) $this->shop->shopperId;
         }
 
-        $shopper = $tx->getShopper();
-        if (! $shopper) {
-            return '';
-        }
-
-        return $this->parseUrl((string) $shopper);
+        return array_values(array_unique(array_filter($candidates)));
     }
 
     /**
@@ -408,17 +422,12 @@ class ElavonShopSubscription
     /**
      * Create a stored-card token from a hosted-card reference (post-HPP).
      */
-    protected function createStoredCardIdFromHostedInstrument(string $shopperId, string $hostedCardReference): string
+    protected function createStoredCardIdFromHostedInstrument(array $shopperCandidates, string $hostedCardReference): string
     {
         $parsedHosted = $this->parseUrl($hostedCardReference);
-        $shopperCandidates = array_values(array_unique(array_filter([
-            $shopperId,
-            $this->shop->shopperId,
-        ])));
-
         $hostedCandidates = array_values(array_unique(array_filter([
-            $parsedHosted,
             $hostedCardReference,
+            $parsedHosted,
         ])));
 
         foreach ($shopperCandidates as $shopper) {
@@ -433,9 +442,13 @@ class ElavonShopSubscription
                     return $response->getId();
                 }
 
+                $data = $response->getData();
+                $failures = (is_object($data) && isset($data->failures)) ? $data->failures : [];
                 $message = '';
-                foreach ($response->getData()->failures ?? [] as $failure) {
-                    $message .= ' | '.$failure->getDescription();
+                if (is_iterable($failures)) {
+                    foreach ($failures as $failure) {
+                        $message .= ' | '.(is_object($failure) && method_exists($failure, 'getDescription') ? $failure->getDescription() : '');
+                    }
                 }
                 Log::warning('Elavon shop subscription: createStoredCard from hostedCard failed', [
                     'shop_id' => $this->shop->id,
