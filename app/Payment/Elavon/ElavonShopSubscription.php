@@ -151,7 +151,7 @@ class ElavonShopSubscription
                 'currencyCode' => 'NOK',
             ],
             'doCapture' => 1,
-            'shopperInteraction' => 'telephoneOrder',
+            'shopperInteraction' => 'ecommerce',
             'shipTo' => [
                 'fullName' => $this->shop->user->fullName,
                 'company' => $this->shop->company_name,

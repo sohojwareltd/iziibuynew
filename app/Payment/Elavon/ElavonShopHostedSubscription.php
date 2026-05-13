@@ -148,7 +148,9 @@ class ElavonShopHostedSubscription
                 'vendor_app_version' => '1.0.0',
                 'php_version' => phpversion(),
             ],
-            'doCreateTransaction' => true,
+            // Vault + 3DS on HPP; capture the subscription in-app (confirmSubscription → chargeViaCard).
+            // If true, Converge charges here and confirmSubscription charges again — duplicate sale / declines.
+            'doCreateTransaction' => false,
             'doThreeDSecure' => 1,
             'hppType' => 'fullPageRedirect',
         ];
