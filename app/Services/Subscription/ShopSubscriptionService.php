@@ -1,17 +1,21 @@
 <?php
+
 namespace App\Services\Subscription;
+
 use App\Models\Shop;
-use App\Services\Subscription\ElavonSubscriptionServiceTrait;
-class ShopSubscriptionService{
-    use ElavonSubscriptionServiceTrait, QuickpaySubscriptionServiceTrait;
-    protected $shop;
+
+class ShopSubscriptionService
+{
+    use ElavonSubscriptionServiceTrait;
+
+    protected Shop $shop;
 
     public function __construct(Shop $shop)
     {
         $this->shop = $shop;
     }
 
-    public static function createSubscription(Shop $shop)
+    public static function createSubscription(Shop $shop): string
     {
         return (new self($shop))->subscibe();
     }
@@ -21,27 +25,13 @@ class ShopSubscriptionService{
         return (new self($shop))->confirm();
     }
 
-    protected function subscibe()
+    protected function subscibe(): string
     {
-        switch ($this->shop->subscriptionMethod) {
-            case 'elavon':
-                return $this->createSubscriptionWithElavon();
-                break;
-            default:
-                return $this->createSubscriptionWithQuickPay();
-                break;
-        }
+        return $this->createSubscriptionWithElavon();
     }
 
     protected function confirm()
     {
-        switch ($this->shop->subscriptionMethod) {
-            case 'elavon':
-                return $this->confirmSubscriptionWithElavon();
-                break;
-            default:
-                return $this->confirmSubscriptionWithQuickPay();
-                break;
-        }
+        return $this->confirmSubscriptionWithElavon();
     }
 }

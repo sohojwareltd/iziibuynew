@@ -7,16 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ShopRegisterRequest;
 use App\Mail\NotificationEmail;
 use App\Mail\ServiceSubscriptionMail;
-use App\Mail\ShopInvoice;
 use App\Mail\WelcomeEmail;
 use App\Models\Charge;
 use App\Models\Shop;
 use App\Models\User;
-use App\Payment\Subscribe;
+use App\Payment\Elavon\ElavonShopSubscription;
 use App\Rules\CreditCardValidation;
 use App\Services\RetailerCommission;
 use App\Services\Subscription\ShopSubscriptionService;
-use Error;
 use Exception;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
@@ -72,7 +70,7 @@ class RegisterController extends Controller
                 'service_monthly_fee' => setting('payment.service_monthly_cost') ? setting('payment.service_monthly_cost') : 299,
                 'per_user_fee' => setting('payment.price_per_user') ? setting('payment.price_per_user') : 99,
                 'terms' => setting('terms.no'),
-                'subscriptionMethod' => 'quickpay',
+                'subscriptionMethod' => 'elavon',
             ]);
 
             $shop->createMetas([
@@ -226,43 +224,29 @@ class RegisterController extends Controller
 
     public function enrollSubscription()
     {
-
         $shop = auth()->user()->shop;
 
-        $api = setting('payment.api_key');
-        $quickPay = new Subscribe($api);
         if (request()->has('type')) {
             $shop->update([
                 'subscription_id' => null,
+                'shopperId' => null,
             ]);
         }
+
         if (! request()->has('type') && $shop->subscription_id) {
-
             $amount = Iziibuy::round_num($shop->subscriptionFee());
-            $payment = $quickPay->subscription($shop->subscription_id)->charge($amount);
+            $charge_status = (new ElavonShopSubscription($shop))->chargeViaCard($amount);
 
-            if ($payment['status'] == true) {
-
-                if (isset($payment['data']->id)) {
-                    $payment_check = $quickPay->payment($payment['data']->id);
-
-                    if ($payment_check['status'] == true && $payment_check['data']->state == 'processed') {
-                        $charge = Charge::create([
-                            'shop_id' => $shop->id,
-                            'order_id' => $payment['data']->id,
-                            'amount' => $amount,
-                            'status' => true,
-                            'comment' => 'subscription fee',
-                            'details' => json_encode($shop->subscriptionFeeDetails()),
-                        ]);
-                    }
-                }
-
-                if ($payment_check['data']->test_mode == false) {
-                    $shop->is_demo = false;
-                } else {
-                    $shop->is_demo = true;
-                }
+            if ($charge_status['status'] == true && ($charge_status['data']['status'] ?? false)) {
+                Charge::create([
+                    'shop_id' => $shop->id,
+                    'order_id' => $charge_status['data']['id'],
+                    'amount' => $amount,
+                    'status' => true,
+                    'comment' => 'subscription fee',
+                    'details' => json_encode($shop->subscriptionFeeDetails()),
+                ]);
+                $shop->is_demo = false;
                 $shop->status = 1;
                 $shop->establishment = 1;
                 $shop->paid_at = Carbon::now();
@@ -276,97 +260,45 @@ class RegisterController extends Controller
 
             return redirect(route('shop.subscription.payment'))->withErrors('There is a problem with your Payment method. Please try again later');
         }
+
         try {
+            $target = ShopSubscriptionService::createSubscription($shop);
 
-            $subscription = $quickPay->subscription()->getUrl(Iziibuy::round_num($shop->subscriptionFee()), true);
-            if ($subscription['status'] == true) {
-                $shop->payment_url = $subscription['data']['url'];
-                $shop->subscription_id = $subscription['data']['payment_id'];
-                $shop->save();
-
-                return redirect($shop->payment_url);
-            } else {
-                throw new Exception('Subscription request failed');
-            }
+            return redirect($target);
         } catch (Exception $e) {
-            return redirect(route('shop.subscription.payment'))->withErrors('There is some problem with your payment. Please contact support');
+            return redirect(route('shop.subscription.payment'))->withErrors($e->getMessage());
         }
     }
 
-    public function confirmSubscription($subscription_id)
+    public function elavonSubscriptionReturn(Request $request)
     {
-        $api = setting('payment.api_key');
-        $quickPay = new Subscribe($api);
+        $request->validate([
+            'sessionId' => ['required', 'string', 'max:255'],
+        ]);
 
-        $subscription = $quickPay->subscription($subscription_id)->get();
+        $shop = auth()->user()->shop;
+        $result = (new ElavonShopSubscription($shop))->finalizeHostedSubscriptionFromSession($request->query('sessionId'));
 
-        if ($subscription['data']->accepted == true) {
-            $shop = auth()->user()->getShop();
-
-            $shop->subscription_id = $subscription['data']->id;
-            $shop->save();
-
-            if ($shop->status == 1) {
-                return redirect(route('shop.complete.signup'))->with('Thank your for subscribe');
-            }
-            if ($shop->paid_at) {
-                if ($shop->paid_at->isSameMonth(today())) {
-                    $shop->status = 1;
-                    $shop->establishment = 1;
-
-                    return redirect(route('shop.dashboard'))->with('Thank your for subscribe');
-                }
-            }
-
-            $amount = Iziibuy::round_num($shop->subscriptionFee());
-
-            $charge_status = $quickPay->subscription($subscription_id)->charge($amount);
-
-            if ($charge_status['status']) {
-                $payment = $quickPay->payment($charge_status['data']->id);
-                try {
-                    Mail::to($shop->user->email)->send(new ShopInvoice($shop));
-                } catch (Exception|Error $e) {
-
-                }
-
-                if ($payment['data']->state == 'processed') {
-                    Charge::create([
-                        'shop_id' => $shop->id,
-                        'order_id' => $charge_status['data']->id,
-                        'amount' => $amount,
-                        'status' => true,
-                        'comment' => 'subscription fee',
-                        'details' => json_encode($shop->subscriptionFeeDetails()),
-                    ]);
-                    if ($charge_status['data']->test_mode == false) {
-                        $shop->is_demo = false;
-                    } else {
-
-                        $shop->is_demo = true;
-                    }
-                    $shop->status = 1;
-                    $shop->establishment = 1;
-                    $shop->paid_at = Carbon::now();
-                    if ($shop->retailer_id) {
-                        RetailerCommission::one_time_pay_out($shop)->pay();
-                        RetailerCommission::commission_from_recurring_payments($shop)->pay();
-                    }
-                    $shop->save();
-                }
-
-                return redirect(route('shop.complete.signup'))->with('Thank your for subscribe');
-            }
+        if (! $result['status']) {
+            return redirect()->route('shop.subscription.payment')
+                ->withErrors($result['data']['message'] ?? 'Payment could not be completed.');
         }
 
-        return redirect(route('shop.subscription.payment'))->withErrors('There is a problem with your Payment method. Please try again later');
+        return redirect()->route('shop.confirm.subscription', [
+            'subscription_id' => $result['data']['cardId'],
+        ]);
     }
-    //     public function confirmSubscription($subscription_id)
-    //     {
-    //         $shop = Shop::where('subscription_id', $subscription_id)->orWhere('shopperId', $subscription_id)->first();
-    // dd($shop);
-    //         return ShopSubscriptionService::confirmSubscription($shop);
-    //     }
+
+    public function confirmSubscription(string $subscription_id)
+    {
+        $shop = auth()->user()->getShop();
+
+        if ($shop->subscription_id !== null && $shop->subscription_id !== $subscription_id) {
+            abort(403);
+        }
+
+        return ShopSubscriptionService::confirmSubscription($shop);
+    }
 
     public function serviceSubscription()
     {
@@ -389,27 +321,20 @@ class RegisterController extends Controller
         try {
 
             $fee = $shop->ServiceSubscriptionFee();
-            $api = setting('payment.api_key');
-            $quickPay = new Subscribe($api);
+            $charge_status = (new ElavonShopSubscription($shop))->chargeViaCard($fee);
 
-            $charge = $quickPay->subscription($shop->subscription_id)->charge($fee);
-
-            if ($charge['status']) {
-                $payment = $quickPay->payment($charge['data']->id);
-
-                if ($payment['data']->state == 'processed') {
-                    Charge::create([
-                        'shop_id' => $shop->id,
-                        'order_id' => $charge['data']->id,
-                        'amount' => $fee,
-                        'status' => true,
-                        'comment' => 'Service subscription',
-
-                    ]);
-                } else {
-                    throw new Exception('Subscription attempt failed');
-                }
+            if (! ($charge_status['status'] && ($charge_status['data']['status'] ?? false))) {
+                throw new Exception($charge_status['data']['message'] ?? 'Subscription attempt failed');
             }
+
+            Charge::create([
+                'shop_id' => $shop->id,
+                'order_id' => $charge_status['data']['id'],
+                'amount' => $fee,
+                'status' => true,
+                'comment' => 'Service subscription',
+
+            ]);
 
             Mail::to($shop->user->email)->send(new ServiceSubscriptionMail($shop));
 

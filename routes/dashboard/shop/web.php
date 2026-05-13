@@ -1,34 +1,31 @@
 <?php
 
-use App\Http\Controllers\Dashboard\Enterprise\TicketController;
-use App\Http\Controllers\Dashboard\Shop\{
-    BookingController,
-    BoxesController,
-    DashboardController,
-    DinteroOnboardingController,
-    ProductsController,
-    CategoriesController,
-    ClientController,
-    ContractSignController,
-    ShippingsController,
-    SlidersController,
-    LevelController,
-    PackageController,
-    PackageoptionController,
-    StoreController,
-    ManagersController,
-    OrdersController,
-    CouponController,
-    ManagerScheduleController,
-    PaymentController,
-    PriceGroupController,
-    RegisterController,
-    ReportController,
-    ResourcesController,
-    ServicesController,
-};
-use App\Http\Controllers\Shop\PersonalTrainerReportController;
+use App\Http\Controllers\Dashboard\Shop\BookingController;
+use App\Http\Controllers\Dashboard\Shop\BoxesController;
+use App\Http\Controllers\Dashboard\Shop\CategoriesController;
+use App\Http\Controllers\Dashboard\Shop\ClientController;
+use App\Http\Controllers\Dashboard\Shop\ContractSignController;
+use App\Http\Controllers\Dashboard\Shop\CouponController;
+use App\Http\Controllers\Dashboard\Shop\DashboardController;
+use App\Http\Controllers\Dashboard\Shop\DinteroOnboardingController;
+use App\Http\Controllers\Dashboard\Shop\LevelController;
+use App\Http\Controllers\Dashboard\Shop\ManagerScheduleController;
+use App\Http\Controllers\Dashboard\Shop\ManagersController;
+use App\Http\Controllers\Dashboard\Shop\OrdersController;
+use App\Http\Controllers\Dashboard\Shop\PackageController;
+use App\Http\Controllers\Dashboard\Shop\PackageoptionController;
+use App\Http\Controllers\Dashboard\Shop\PaymentController;
+use App\Http\Controllers\Dashboard\Shop\PriceGroupController;
+use App\Http\Controllers\Dashboard\Shop\ProductsController;
+use App\Http\Controllers\Dashboard\Shop\RegisterController;
+use App\Http\Controllers\Dashboard\Shop\ReportController;
+use App\Http\Controllers\Dashboard\Shop\ResourcesController;
+use App\Http\Controllers\Dashboard\Shop\ServicesController;
+use App\Http\Controllers\Dashboard\Shop\ShippingsController;
+use App\Http\Controllers\Dashboard\Shop\SlidersController;
+use App\Http\Controllers\Dashboard\Shop\StoreController;
 use App\Http\Controllers\QrcodeController;
+use App\Http\Controllers\Shop\PersonalTrainerReportController;
 use App\Mail\BookingPlaced;
 use App\Mail\OrderConfirmed;
 use App\Mail\OrderPlaced;
@@ -42,9 +39,7 @@ use App\Payment\Surfboard\SurfboardTerminal;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
-
 Route::post('remove-media', [DashboardController::class, 'removeMedia'])->name('remove.media');
-
 
 Route::get('/complete-registration', [RegisterController::class, 'completeProfile'])->name('completeProfile');
 
@@ -52,6 +47,7 @@ Route::put('/complete-registration', [RegisterController::class, 'completeProfil
 Route::get('subscription', [RegisterController::class, 'subscriptionIndex'])->name('subscription.payment');
 Route::get('delete-account', [RegisterController::class, 'deleteAccount'])->name('delete.account');
 Route::any('enroll-subscription', [RegisterController::class, 'enrollSubscription'])->name('enroll.subscription');
+Route::get('subscription/elavon-return', [RegisterController::class, 'elavonSubscriptionReturn'])->name('subscription.elavon.return');
 Route::get('confirm-subscription/{subscription_id}', [RegisterController::class, 'confirmSubscription'])->name('confirm.subscription');
 
 Route::get('/charges', [DashboardController::class, 'indexCharges'])->name('charges.index');
@@ -60,7 +56,7 @@ Route::get('/charges/{charge}/invoice/pdf', [DashboardController::class, 'downlo
 
 Route::middleware('Paid')->group(function () {
 
-    //Products Related Routes
+    // Products Related Routes
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('qrcodes', QrcodeController::class);
     Route::resource('products', ProductsController::class)->except('show')->middleware('permission:product,browse');
@@ -78,7 +74,7 @@ Route::middleware('Paid')->group(function () {
         Route::group(['prefix' => 'variation/{product}/', 'as' => 'variation.'], function () {
             Route::get('create', 'create_variation')->name('create');
             Route::get('affiliate', 'affiliate_variation')->name('affiliate');
-            Route::post('update',  'update_variation')->name('update');
+            Route::post('update', 'update_variation')->name('update');
             Route::delete('delete', 'delete_variation')->name('destroy');
         });
     });
@@ -101,16 +97,16 @@ Route::middleware('Paid')->group(function () {
     Route::resource('coupon', CouponController::class);
     Route::resource('storage', StoreController::class)->middleware('permission:store,browse');
     Route::post('/storage/{store}/add-product', [StoreController::class, 'addProduct'])->name('add-product');
-    //slider related route
+    // slider related route
     Route::resource('sliders', SlidersController::class)->except('create', 'show')->middleware('permission:slider,browse');
-    //Shop langaue related route    
+    // Shop langaue related route
     Route::get('translations', [DashboardController::class, 'translations'])->name('translations');
     Route::get('shop-translations', [DashboardController::class, 'shop_translations'])->name('shop_translations');
     Route::post('shop-translations', [DashboardController::class, 'shop_translations_update'])->name('shop_translations_update');
     Route::post('languages/update', [DashboardController::class, 'update_languages'])->name('languages.update');
     Route::post('terms/update', [DashboardController::class, 'update_terms'])->name('terms.update');
 
-    //End of shop langaue related route 
+    // End of shop langaue related route
 
     Route::get('/managers', [ManagersController::class, 'index'])->name('managers')->middleware('permission:manager,browse');
     Route::get('/managers/{user}/schedule', [ManagersController::class, 'schedule'])->name('managers.schedule');
@@ -122,16 +118,13 @@ Route::middleware('Paid')->group(function () {
     Route::resource('sliders', SlidersController::class)->middleware('permission:slider,browse');
     Route::post('/update/config', [DashboardController::class, 'updateConfig'])->name('update.config');
     Route::post('order/vcard', [ManagersController::class, 'orderVcard'])->name('order.vCard');
-    //finance
+    // finance
     Route::resource('coupon', CouponController::class)->middleware('permission:slider,browse')->middleware('permission:coupon,browse');
-
-
 
     Route::get('/cancel-subscription', [DashboardController::class, 'cancelSubscription'])->name('cancel-subscription');
 
     Route::get('complete-signup', [ContractSignController::class, 'selectPaymentMethods'])->name('complete.signup');
     Route::post('complete-signup', [ContractSignController::class, 'assignGatewayByPaymentMethods'])->name('post.complete.signup');
-
 
     Route::get('/setup/payment/surfboard', [ContractSignController::class, 'setup_surfboard_payment'])->name('setup_surfboard_payment');
     Route::get('/setup/payment/dintero', [DinteroOnboardingController::class, 'setup'])->name('setup_dintero_payment');
@@ -146,18 +139,20 @@ Route::middleware('Paid')->group(function () {
         $shop = auth()->user()->getShop();
 
         try {
-            if ($shop->paymentMethod != 'surfboard' || $shop->contract_status != 0)  throw new Exception('You do not have permission');
-            $message = "Contract signed";
+            if ($shop->paymentMethod != 'surfboard' || $shop->contract_status != 0) {
+                throw new Exception('You do not have permission');
+            }
+            $message = 'Contract signed';
             // Check merchant status
             $application = (new SurfboardMarchant($shop))->statusCheck()->json();
             $applicationStatus = $application['data']['applicationStatus'] ?? null;
 
             // Skip if application status is not successful
-            if ($application['status'] !== "SUCCESS" || $applicationStatus !== "MERCHANT_CREATED") {
+            if ($application['status'] !== 'SUCCESS' || $applicationStatus !== 'MERCHANT_CREATED') {
                 $shop->createMetas([
-                    "surfboard_applicationStatus" => $applicationStatus,
+                    'surfboard_applicationStatus' => $applicationStatus,
                 ]);
-                throw new Exception('Your application status is ' . $applicationStatus);
+                throw new Exception('Your application status is '.$applicationStatus);
             }
 
             // If merchant and store IDs exist
@@ -173,7 +168,7 @@ Route::middleware('Paid')->group(function () {
 
                 if ($terminalId) {
                     $shop->update([
-                        'contract_status' => 1
+                        'contract_status' => 1,
                     ]);
                     $shop->createMeta('surfboard_terminalId', $terminalId);
                 } else {
@@ -186,9 +181,9 @@ Route::middleware('Paid')->group(function () {
             } else {
                 // Save merchant and store details
                 $shop->createMetas([
-                    "surfboard_applicationStatus" => $applicationStatus,
-                    "surfboard_storeId" => $application['data']['storeId'] ?? null,
-                    "surfboard_merchantId" => $application['data']['merchantId'] ?? null,
+                    'surfboard_applicationStatus' => $applicationStatus,
+                    'surfboard_storeId' => $application['data']['storeId'] ?? null,
+                    'surfboard_merchantId' => $application['data']['merchantId'] ?? null,
                 ]);
 
                 if ($shop->surfboard_terminalId) {
@@ -200,7 +195,7 @@ Route::middleware('Paid')->group(function () {
 
                 if ($terminalId) {
                     $shop->update([
-                        'contract_status' => 1
+                        'contract_status' => 1,
                     ]);
                     $shop->createMeta('surfboard_terminalId', $terminalId);
                 } else {
@@ -212,7 +207,7 @@ Route::middleware('Paid')->group(function () {
             }
 
             return redirect()->back()->with('scuess', $message);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log exceptions to debug errors
             Log::error("Error processing Shop ID {$shop->id}", [
                 'error' => $e->getMessage(),
@@ -231,7 +226,7 @@ Route::middleware('Paid')->group(function () {
     Route::post('/orders/{order}/refund-store', [PaymentController::class, 'refund'])->name('orders.refund.store');
     Route::post('/order/{order}/capture', [PaymentController::class, 'captureOrder'])->name('captureOrder');
 
-    //Subscription Box related routes
+    // Subscription Box related routes
     // Route::resource('boxes', BoxesController::class);
     // boxes Controller start
     Route::get('box', [BoxesController::class, 'index'])->name('boxes.index')->middleware('permission:subscription_product,browse');
@@ -243,10 +238,7 @@ Route::middleware('Paid')->group(function () {
     Route::put('box/update/{box}', [BoxesController::class, 'update'])->name('boxes.update');
     // Boxes controller end
     Route::get('/boxes/subscription/{membership}/invoice', [BoxesController::class, 'subscriptionInvoice'])->name('subscriptionInvoice');
-    //end of Subscription Box related routes
-
-
-
+    // end of Subscription Box related routes
 
     Route::group(['as' => 'booking.', 'middleware' => ['canProvideService']], function () {
 
@@ -266,9 +258,14 @@ Route::middleware('Paid')->group(function () {
         );
         Route::get('booking/{booking}/set-status/completed', function (Booking $booking) {
             try {
-                if ($booking->shop_id != auth()->user()->shop->id) throw new Exception("You do not have access");
-                if ($booking->status != 'Pending') throw new Exception("Status can't be changed");
+                if ($booking->shop_id != auth()->user()->shop->id) {
+                    throw new Exception('You do not have access');
+                }
+                if ($booking->status != 'Pending') {
+                    throw new Exception("Status can't be changed");
+                }
                 $booking->update(['status' => $booking::STATUS_COMPLETED]);
+
                 return redirect()->back()->with('success', 'Status updated to completed');
             } catch (Exception $e) {
                 return redirect()->back()->with('error', $e->getMessage());
@@ -282,6 +279,7 @@ Route::middleware('Paid')->group(function () {
 
     Route::get('disablekyc', function () {
         auth()->user()->shop->createMeta('needKYC', false);
+
         return redirect()->back();
     })->name('disablekyc');
 

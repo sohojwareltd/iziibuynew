@@ -7,20 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Charge;
 use App\Models\Language;
 use App\Models\Order;
-use App\Models\User;
 use App\Models\Shop;
-use App\Payment\Subscribe;
+use App\Models\User;
 use App\Services\Clearhaus;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Iziibuy;
 
 class DashboardController extends Controller
@@ -31,7 +28,7 @@ class DashboardController extends Controller
             'paid' => Auth::user()->shop->orders()->where('payment_status', 1)->where('status', 5)->count(),
             'pending' => Auth::user()->shop->orders()->where('status', 0)->count(),
             'cancel' => Auth::user()->shop->orders()->where('status', 3)->count(),
-            'undelivered' => Auth::user()->shop->orders()->where('payment_status', 1)->where('status', 4)->count()
+            'undelivered' => Auth::user()->shop->orders()->where('payment_status', 1)->where('status', 4)->count(),
         ];
         $coupons = Auth::user()->shop->coupons->count();
         $managers = Auth::user()->shop->users->count();
@@ -40,11 +37,12 @@ class DashboardController extends Controller
             '>=',
             Carbon::now()->startOfMonth()->subMonth()->toDateString()
         )->sum('total');
-        $todays_sales =  Auth::user()->shop->orders()->where('status', '!=', 0)->whereDate(
+        $todays_sales = Auth::user()->shop->orders()->where('status', '!=', 0)->whereDate(
             'created_at',
             '>=',
             Carbon::today()
         )->sum('total');
+
         return view('dashboard.shop.index', compact('orders', 'coupons', 'managers', 'monthly_sales', 'todays_sales'));
     }
 
@@ -60,12 +58,14 @@ class DashboardController extends Controller
         }
         session()->flash('success', 'File removed');
     }
-    public function profile()
 
+    public function profile()
     {
         $user = auth()->user()->load('shop');
+
         return view('dashboard.shop.profile.index', compact('user'));
     }
+
     public function updateProfile(Request $request, Shop $shop)
     {
         if (auth()->user()->role_id == 1) {
@@ -79,27 +79,27 @@ class DashboardController extends Controller
             'default_currency' => $request->default_currency,
             'currencies' => json_encode($request->currencies),
             'selling_location_mode' => $request->selling_location_mode,
-            'locations' => json_encode($request->locations)
+            'locations' => json_encode($request->locations),
         ]);
         $data = $request->meta;
 
         $data['footerPaymentMethod'] = $request->meta['footerPaymentMethod'] ?? [];
         Iziibuy::resetShop($shop);
         $shop->createMetas($data);
+
         return back()->with('success', 'profile updated succesfully');
 
         return back()->with('success', 'profile updated succesfully');
     }
-
 
     public function translations()
     {
         return view('dashboard.shop.store.translations');
     }
+
     public function shop_translations()
     {
         $languages = Language::where('shopCanEdit', 1)->get();
-
 
         return view('dashboard.shop.store.shop_translations', compact('languages'));
     }
@@ -108,6 +108,7 @@ class DashboardController extends Controller
     {
         $shop = auth()->user()->getShop();
         $shop->mylanguages()->sync($request->languages);
+
         return redirect()->back()->with('success', 'Language updated');
     }
 
@@ -116,9 +117,8 @@ class DashboardController extends Controller
         $request->validate(['default' => ['required', Rule::in(Constants::LANGUAGES['list'])]]);
 
         auth()->user()->shop()->update([
-            'default_language' => $request->default
+            'default_language' => $request->default,
         ]);
-
 
         return redirect()->back()->with('success', 'Language updated');
     }
@@ -134,13 +134,13 @@ class DashboardController extends Controller
 
         $translations = $shop->prepareTranslations($request);
         $shop->saveTranslations($translations);
+
         return redirect()->back()->with('success', 'Language updated');
     }
 
     public function reportIndex()
     {
         $shop = Auth()->user()->shop;
-
 
         $query = Order::where('payment_status', 1)->where('shop_id', $shop->id)->where('status', '!=', 0);
         if (request()->filled('filter')) {
@@ -156,8 +156,6 @@ class DashboardController extends Controller
         })->map(function ($row) {
             return $row->sum('total');
         });
-
-
 
         return view('dashboard.shop.report', compact('sells', 'shop'));
     }
@@ -182,12 +180,13 @@ class DashboardController extends Controller
             } else {
                 $transiction = $datas[0];
             }
-        }else{
+        } else {
             $transiction = [];
         }
 
-        return view('dashboard.shop.charge_invoice', compact('datas', 'transiction','charge'));
+        return view('dashboard.shop.charge_invoice', compact('datas', 'transiction', 'charge'));
     }
+
     public function downloadInvoice(Charge $charge)
     {
 
@@ -198,11 +197,11 @@ class DashboardController extends Controller
         $tax = $amount - $base_price;
         $pdf = Pdf::loadView('dashboard.shop.pdf.invoice', ['charge' => $charge, 'tax' => $tax, 'base_price' => $base_price]);
 
-        $fileName = 'invoice/invoice-' . uniqid() . '.pdf';
+        $fileName = 'invoice/invoice-'.uniqid().'.pdf';
 
         try {
             return $pdf->download($fileName);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Handle the exception here
             return redirect()->back()->withErrors($e->getMessage());
         }
@@ -210,22 +209,23 @@ class DashboardController extends Controller
 
     public function cancelSubscription()
     {
-        $api =  setting('payment.api_key');
-        $quickPay = new Subscribe($api);
-        $response = $quickPay->unsubscibe(auth()->user()->shop);
-        return redirect()->back()->with('success', "Subscription cancelled for this account");
+        auth()->user()->shop->update([
+            'subscription_id' => null,
+            'shopperId' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Subscription cancelled for this account');
     }
+
     public function updateConfig(Request $request)
     {
 
-
-
         $request->validate([
-            'toggle' => 'required'
+            'toggle' => 'required',
         ]);
 
         auth()->user()->shop()->update([
-            'store_as_pickup_point' => $request->toggle
+            'store_as_pickup_point' => $request->toggle,
         ]);
 
         return redirect()->back()->with(['success', 'Successfull']);
@@ -233,28 +233,32 @@ class DashboardController extends Controller
 
     public function ptReport()
     {
-        if (!auth()->user()->getShop()->defaultOption) return redirect()->back()->withErrors('Shop do not have default option');
-        $allManagers =  auth()->user()->shop->users()->personalTrainer()->get();
+        if (! auth()->user()->getShop()->defaultOption) {
+            return redirect()->back()->withErrors('Shop do not have default option');
+        }
+        $allManagers = auth()->user()->shop->users()->personalTrainer()->get();
         $managers = auth()->user()->shop->users()->when(request()->filled('manager'), function ($query) {
             $query->where('id', request()->manager);
         })->personalTrainer()->get();
-        $orders =  Order::where('payment_status', 1)->whereHas('metas', function ($query) use ($managers) {
+        $orders = Order::where('payment_status', 1)->whereHas('metas', function ($query) use ($managers) {
             $query->where('column_name', 'trainer')->whereIn('column_value', $managers->pluck('id')->toArray());
         })->where('payment_status', 1)->when(request()->filled('from'), function ($query) {
             $query->whereBetween('created_at', [request()->filled('from'), request()->filled('to')]);
         })->get();
 
-
         return view('dashboard.shop.report.pt_report', compact('allManagers', 'orders', 'managers'));
     }
+
     public function ptReportPdf()
     {
-        if (!auth()->user()->getShop()->defaultOption) return redirect()->back()->withErrors('Shop do not have default option');
+        if (! auth()->user()->getShop()->defaultOption) {
+            return redirect()->back()->withErrors('Shop do not have default option');
+        }
 
         $managers = auth()->user()->shop->users()->when(request()->filled('manager'), function ($query) {
             $query->where('id', request()->manager);
         })->personalTrainer()->get();
-        $orders =  Order::where('payment_status', 1)->whereHas('metas', function ($query) use ($managers) {
+        $orders = Order::where('payment_status', 1)->whereHas('metas', function ($query) use ($managers) {
             $query->where('column_name', 'trainer')->whereIn('column_value', $managers->pluck('id')->toArray());
         })->where('payment_status', 1)->when(request()->filled('from'), function ($query) {
             $query->whereBetween('created_at', [request()->filled('from'), request()->filled('to')]);
@@ -264,13 +268,15 @@ class DashboardController extends Controller
 
         return $pdf->download('pt_report.pdf');
     }
+
     public function clients()
     {
-        $managers =  auth()->user()->shop->users()->personalTrainer()->get()->pluck('id')->toArray();
+        $managers = auth()->user()->shop->users()->personalTrainer()->get()->pluck('id')->toArray();
         $users = User::whereHas('metas', function ($query) use ($managers) {
             $query->where('column_name', 'personal_trainner')->whereIn('column_value', $managers);
         })->latest()->paginate(10);
         $shop = auth()->user()->getShop();
+
         return view('dashboard.shop.report.clients', compact('users', 'shop'));
     }
 
@@ -278,11 +284,13 @@ class DashboardController extends Controller
     {
         $bookings = Booking::where('shop_id', auth()->user()->getShop()->id);
 
-        if ($request->filled('status')) $bookings =  $bookings->where('status', $request->status);
+        if ($request->filled('status')) {
+            $bookings = $bookings->where('status', $request->status);
+        }
 
         $bookings = $bookings->latest()->paginate(20);
 
-        //return view('auth.manager.booking.index', compact('bookings'));
+        // return view('auth.manager.booking.index', compact('bookings'));
         return view('dashboard.shop.booking.calender', compact('bookings'));
     }
 }
