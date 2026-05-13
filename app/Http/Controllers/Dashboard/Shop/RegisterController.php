@@ -272,12 +272,24 @@ class RegisterController extends Controller
 
     public function elavonSubscriptionReturn(Request $request)
     {
-        $request->validate([
-            'sessionId' => ['required', 'string', 'max:255'],
-        ]);
+        $sessionId = $request->input('sessionId')
+            ?? $request->input('session_id')
+            ?? $request->query('sessionId')
+            ?? $request->query('session_id');
+
+        if (! is_string($sessionId) || trim($sessionId) === '') {
+            return redirect()->route('shop.subscription.payment')
+                ->withErrors('Payment session is missing.');
+        }
+
+        $sessionId = trim($sessionId);
+        if (strlen($sessionId) > 255) {
+            return redirect()->route('shop.subscription.payment')
+                ->withErrors('Invalid payment session.');
+        }
 
         $shop = auth()->user()->shop;
-        $result = (new ElavonShopSubscription($shop))->finalizeHostedSubscriptionFromSession($request->query('sessionId'));
+        $result = (new ElavonShopSubscription($shop))->finalizeHostedSubscriptionFromSession($sessionId);
 
         if (! $result['status']) {
             return redirect()->route('shop.subscription.payment')

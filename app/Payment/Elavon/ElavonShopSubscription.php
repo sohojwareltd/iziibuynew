@@ -222,6 +222,37 @@ class ElavonShopSubscription
     }
 
     /**
+     * Resolve a Converge resource id from either a full href or a bare id.
+     * Some responses return plain UUIDs (no URL); parse_url() would yield nothing.
+     */
+    protected function convergeEntityIdFromHrefOrId(?string $hrefOrId): string
+    {
+        if ($hrefOrId === null || trim((string) $hrefOrId) === '') {
+            return '';
+        }
+
+        $v = trim((string) $hrefOrId);
+
+        if (str_contains($v, '://')) {
+            $parsed = $this->parseUrl($v);
+
+            return $parsed !== '' ? $parsed : $v;
+        }
+
+        if (str_contains($v, '/')) {
+            $parsed = $this->parseUrl($v);
+            if ($parsed !== '') {
+                return $parsed;
+            }
+            $parts = array_values(array_filter(explode('/', $v)));
+
+            return $parts !== [] ? (string) end($parts) : $v;
+        }
+
+        return $v;
+    }
+
+    /**
      * @return array{status: bool, code?: int, data: array<string, mixed>}
      */
     public function createSubscription(): array
@@ -234,7 +265,7 @@ class ElavonShopSubscription
                     'status' => true,
                     'code' => 200,
                     'data' => [
-                        'shopperId' => $this->parseUrl($response->getShopper()),
+                        'shopperId' => $this->convergeEntityIdFromHrefOrId($response->getShopper()),
                         'cardId' => $response->getId(),
                     ],
                 ];
@@ -315,7 +346,7 @@ class ElavonShopSubscription
         $this->shop->subscription_id = $cardId;
         $primaryShopper = $shopperCandidates[0] ?? '';
         if ($primaryShopper !== '') {
-            $this->shop->shopperId = $this->parseUrl($primaryShopper) ?: $primaryShopper;
+            $this->shop->shopperId = $this->convergeEntityIdFromHrefOrId($primaryShopper) ?: $primaryShopper;
         }
         $this->shop->payment_url = null;
         $this->shop->save();
@@ -331,33 +362,57 @@ class ElavonShopSubscription
      */
     protected function loadPaymentSessionWithRetry(string $sessionId): PaymentSessionResponse
     {
-        $attempts = 3;
-        $delayMicros = 400_000;
+        $attempts = 6;
+        $delayMicros = 750_000;
         $last = $this->elavon->getPaymentSession($sessionId);
 
-        for ($i = 1; $i < $attempts; $i++) {
-            if (
-                $last->isSuccess()
-                && (
-                    $last->getStoredCard()
-                    || $last->getHostedCard()
-                    || $last->getTransaction()
-                )
-            ) {
+        for ($i = 0; $i < $attempts; $i++) {
+            if ($this->paymentSessionReadyForVaulting($last)) {
                 return $last;
             }
-            usleep($delayMicros);
-            $last = $this->elavon->getPaymentSession($sessionId);
+
+            if ($i < $attempts - 1) {
+                usleep($delayMicros);
+                $last = $this->elavon->getPaymentSession($sessionId);
+            }
         }
 
         return $last;
+    }
+
+    /**
+     * True when the session (or its linked transaction) already exposes a stored or hosted card.
+     * Stopping on "transaction only" is too early: Converge often links the transaction before card refs exist.
+     */
+    protected function paymentSessionReadyForVaulting(PaymentSessionResponse $session): bool
+    {
+        if (! $session->isSuccess()) {
+            return false;
+        }
+
+        if ($session->getStoredCard() || $session->getHostedCard()) {
+            return true;
+        }
+
+        $txHref = $session->getTransaction();
+        if (! $txHref) {
+            return false;
+        }
+
+        $tx = $this->elavon->getTransaction($this->convergeEntityIdFromHrefOrId((string) $txHref));
+
+        if (! $tx->isSuccess()) {
+            return false;
+        }
+
+        return (bool) ($tx->getStoredCard() || $tx->getHostedCard());
     }
 
     protected function resolveStoredCardIdFromPaymentSession(PaymentSessionResponse $session): string
     {
         $href = $session->getStoredCard();
         if ($href) {
-            return $this->parseUrl((string) $href);
+            return $this->convergeEntityIdFromHrefOrId((string) $href);
         }
 
         $txHref = $session->getTransaction();
@@ -365,7 +420,7 @@ class ElavonShopSubscription
             return '';
         }
 
-        $tx = $this->elavon->getTransaction($this->parseUrl((string) $txHref));
+        $tx = $this->elavon->getTransaction($this->convergeEntityIdFromHrefOrId((string) $txHref));
         if (! $tx->isSuccess()) {
             return '';
         }
@@ -375,7 +430,7 @@ class ElavonShopSubscription
             return '';
         }
 
-        return $this->parseUrl((string) $stored);
+        return $this->convergeEntityIdFromHrefOrId((string) $stored);
     }
 
     /**
@@ -387,23 +442,25 @@ class ElavonShopSubscription
 
         $href = $session->getShopper();
         if ($href) {
-            $candidates[] = (string) $href;
-            $parsed = $this->parseUrl((string) $href);
-            if ($parsed !== '') {
-                $candidates[] = $parsed;
+            $h = (string) $href;
+            $candidates[] = $h;
+            $id = $this->convergeEntityIdFromHrefOrId($h);
+            if ($id !== '' && $id !== $h) {
+                $candidates[] = $id;
             }
         }
 
         $txHref = $session->getTransaction();
         if ($txHref) {
-            $tx = $this->elavon->getTransaction($this->parseUrl((string) $txHref));
+            $tx = $this->elavon->getTransaction($this->convergeEntityIdFromHrefOrId((string) $txHref));
             if ($tx->isSuccess()) {
                 $shopper = $tx->getShopper();
                 if ($shopper) {
-                    $candidates[] = (string) $shopper;
-                    $parsed = $this->parseUrl((string) $shopper);
-                    if ($parsed !== '') {
-                        $candidates[] = $parsed;
+                    $h = (string) $shopper;
+                    $candidates[] = $h;
+                    $id = $this->convergeEntityIdFromHrefOrId($h);
+                    if ($id !== '' && $id !== $h) {
+                        $candidates[] = $id;
                     }
                 }
             }
@@ -431,7 +488,7 @@ class ElavonShopSubscription
             return '';
         }
 
-        $tx = $this->elavon->getTransaction($this->parseUrl((string) $txHref));
+        $tx = $this->elavon->getTransaction($this->convergeEntityIdFromHrefOrId((string) $txHref));
         if (! $tx->isSuccess()) {
             return '';
         }
@@ -449,7 +506,7 @@ class ElavonShopSubscription
      */
     protected function createStoredCardIdFromHostedInstrument(array $shopperCandidates, string $hostedCardReference): string
     {
-        $parsedHosted = $this->parseUrl($hostedCardReference);
+        $parsedHosted = $this->convergeEntityIdFromHrefOrId($hostedCardReference);
         $hostedCandidates = array_values(array_unique(array_filter([
             $hostedCardReference,
             $parsedHosted,
