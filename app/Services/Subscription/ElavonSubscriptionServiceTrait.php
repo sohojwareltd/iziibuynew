@@ -10,7 +10,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Mail;
 use Iziibuy;
-
+use Illuminate\Support\Facades\Log;
 trait ElavonSubscriptionServiceTrait
 {
     protected function createSubscriptionWithElavon()
@@ -62,7 +62,7 @@ trait ElavonSubscriptionServiceTrait
 try {
                 Mail::to($this->shop->user->email)->send(new ShopInvoice($this->shop));
             } catch (Exception $e) {
-                Illuminate\Support\Facades\Log::error('Error sending shop invoice: ' . $e->getMessage());
+                Log::error('Error sending shop invoice: ' . $e->getMessage());
             }
                 Charge::create([
                     'shop_id' => $this->shop->id,
