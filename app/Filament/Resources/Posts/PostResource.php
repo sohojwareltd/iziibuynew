@@ -6,6 +6,7 @@ use App\Filament\Resources\Posts\Pages\ManagePosts;
 use App\Models\Post;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -111,6 +112,10 @@ class PostResource extends Resource
             ])
             ->filters([
                 //
+            ])
+            ->headerActions([
+                CreateAction::make()
+                    ->label(__('New post')),
             ])
             ->recordActions([
                 EditAction::make(),
