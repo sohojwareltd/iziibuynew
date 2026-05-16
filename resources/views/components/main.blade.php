@@ -73,21 +73,23 @@
                 <div class="collapse navbar-collapse order-3 order-lg-2 justify-content-lg-end" id="navigation-menu">
 
                     <ul class="navbar-nav my-3 my-lg-0">
-                        <li class="nav-item">
-                            <a href="{{ route('home') }}" class="nav-item nav-link">
-                                {{ __('words.home') }}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('about', request()->user_name) }}" class="nav-item nav-link">
-                                {{ __('words.about') }}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('contact', request()->user_name) }}" class="nav-item nav-link">
-                                {{ __('words.contact') }}
-                            </a>
-                        </li>
+                        <x-cms-menu location="header" :fallback="true">
+                            <li class="nav-item">
+                                <a href="{{ route('home') }}" class="nav-item nav-link">
+                                    {{ __('words.home') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('about', request()->user_name) }}" class="nav-item nav-link">
+                                    {{ __('words.about') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('contact', request()->user_name) }}" class="nav-item nav-link">
+                                    {{ __('words.contact') }}
+                                </a>
+                            </li>
+                        </x-cms-menu>
                         @if (!Auth()->check())
                             <li class="nav-item">
                                 <a href="{{ route('login') }}" class="nav-item nav-link login px-4">

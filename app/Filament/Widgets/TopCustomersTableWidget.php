@@ -13,13 +13,17 @@ class TopCustomersTableWidget extends TableWidget
 {
     protected static ?int $sort = -38;
 
+    /**
+     * @var view-string
+     */
+    protected string $view = 'filament.widgets.voyager-table-widget';
+
     protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
         return $table
-            ->heading(__('Top customers'))
-            ->description(__('By lifetime spend (all orders).'))
+            ->heading(__('Top users'))
             ->emptyStateHeading(__('No customer spend data'))
             ->emptyStateDescription(__('Orders need a linked customer to appear here.'))
             ->records(fn (): Collection => VoyagerSalesDashboard::topCustomers()->map(fn (object $row): array => [
@@ -30,11 +34,13 @@ class TopCustomersTableWidget extends TableWidget
             ->paginated(false)
             ->columns([
                 TextColumn::make('name')
-                    ->label(__('Customer'))
-                    ->weight('medium'),
+                    ->label(__('Name'))
+                    ->weight('medium')
+                    ->url(fn (): string => UserResource::getUrl())
+                    ->color('warning'),
                 TextColumn::make('total_orders')
-                    ->label(__('Total spend'))
-                    ->money('NOK')
+                    ->label(__('Total amount'))
+                    ->formatStateUsing(fn ($state): string => VoyagerSalesDashboard::moneyFormat((float) $state))
                     ->alignEnd(),
             ])
             ->contentFooter(view('filament.widgets.table-link-footer', [

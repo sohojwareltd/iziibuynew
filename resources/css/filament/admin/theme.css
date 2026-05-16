@@ -21,32 +21,185 @@
     @apply bg-gray-50/80 dark:bg-gray-950;
 }
 
-/* Primary stat / focus tint on dashboard */
-.fi-wi-stats-overview .fi-section-content-ctn {
+/* Stats overview on retailer/other dashboards (exclude Voyager-cloned tiles) */
+.fi-wi-stats-overview:not(.fi-wi-voyager-sales-stats) .fi-section-content-ctn {
     @apply gap-4;
 }
 
-/* Stat tiles: clearer hierarchy */
-.fi-wi-stats-overview-stat {
+.fi-wi-stats-overview:not(.fi-wi-voyager-sales-stats) .fi-wi-stats-overview-stat {
     @apply rounded-xl shadow-sm ring-1 ring-gray-950/5 transition hover:shadow-md hover:ring-primary-500/20 dark:ring-white/10 dark:hover:ring-primary-400/25;
 }
 
-.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
+.fi-wi-stats-overview:not(.fi-wi-voyager-sales-stats) .fi-wi-stats-overview-stat-value {
     @apply tracking-tight;
 }
 
-/* Dashboard table widgets: card-like container */
-.fi-wi-table .fi-section.rounded-xl,
-.fi-wi-table > .fi-section {
+/* Table widgets (non-Voyager styling retained via neutral chrome) */
+.fi-wi-table:not(.fi-wi-voyager-sales-table) .fi-section.rounded-xl,
+.fi-wi-table:not(.fi-wi-voyager-sales-table) > .fi-section {
     @apply overflow-hidden rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10;
 }
 
-.fi-wi-table .fi-ta {
+.fi-wi-table:not(.fi-wi-voyager-sales-table) .fi-ta {
     @apply rounded-b-xl;
 }
 
-.fi-wi-table .fi-ta-header-cell {
-    @apply font-semibold uppercase tracking-wide text-xs text-gray-500 dark:text-gray-400;
+.fi-wi-table:not(.fi-wi-voyager-sales-table) .fi-ta-header-cell {
+    @apply text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Legacy Voyager sales dashboard look (Filament home widgets)
+|--------------------------------------------------------------------------
+*/
+
+.fi-wi-voyager-sales-stats .fi-sc-section {
+    @apply bg-transparent shadow-none ring-0;
+}
+
+.fi-wi-voyager-sales-stats .fi-section {
+    @apply bg-transparent shadow-none ring-0;
+}
+
+.fi-wi-voyager-sales-stats .fi-section-content-ctn {
+    @apply gap-6 p-0;
+}
+
+.fi-wi-voyager-sales-stats .fi-wi-stats-overview-stat-label-ctn svg {
+    @apply hidden;
+}
+
+.fi-wi-voyager-sales-stats .fi-wi-stats-overview-stat-chart {
+    @apply hidden;
+}
+
+.fi-wi-voyager-sales-stats .fi-wi-stats-overview-stat-label-ctn {
+    @apply gap-0;
+}
+
+.fi-wi-voyager-sales-stats .fi-wi-stats-overview-stat {
+    margin-bottom: 0;
+    min-height: 8rem;
+    border-radius: 10px;
+    background-color: #333b52;
+    padding: 1.5rem 1.25rem;
+    --tw-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.fi-wi-voyager-sales-stats .fi-wi-stats-overview-stat-label {
+    font-size: 1.125rem;
+    font-weight: 200;
+    letter-spacing: 0.08em;
+    color: #fff;
+}
+
+.fi-wi-voyager-sales-stats .fi-wi-stats-overview-stat-value {
+    margin-top: 0.35rem;
+    text-align: center;
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.fi-wi-voyager-sales-stats .fi-wi-stats-overview-stat-description {
+    margin-top: 0.65rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: rgb(255 255 255 / 0.95);
+}
+
+/* Voyager-inspired tables: teal header (white type) + light body (dark type) for contrast */
+.fi-wi-voyager-sales-table.fi-wi-widget {
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+
+.fi-wi-voyager-sales-table .fi-section-header-heading {
+    margin-inline-start: 1.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.fi-wi-voyager-sales-table .fi-ta-header-heading {
+    margin-inline-start: 1.5rem;
+    padding-block: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.fi-wi-voyager-sales-table .fi-ta-header-description {
+    color: rgb(71 85 105);
+}
+
+.fi-wi-voyager-sales-table thead .fi-ta-header-cell {
+    border-style: none;
+    background-color: #7c9da6 !important;
+    padding-block: 0.65rem;
+    padding-inline: 1.25rem;
+    font-size: 12px !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fff !important;
+}
+
+/* Header label text inside cells (nested spans keep contrast on teal) */
+.fi-wi-voyager-sales-table thead .fi-ta-header-cell * {
+    color: inherit !important;
+}
+
+.fi-wi-voyager-sales-table .fi-ta-cell {
+    border-style: none;
+    padding-block: 0.65rem;
+    padding-inline: 1.25rem;
+    font-size: 0.875rem;
+    color: #1e293b !important;
+}
+
+.fi-wi-voyager-sales-table .fi-ta-cell * {
+    color: inherit;
+}
+
+/* Links in body: readable on light rows */
+.fi-wi-voyager-sales-table tbody .fi-ta-cell a {
+    color: #1f3763 !important;
+    font-weight: 500;
+}
+
+.fi-wi-voyager-sales-table tbody .fi-ta-cell a:hover {
+    color: #163058 !important;
+    text-decoration-line: underline;
+}
+
+.fi-wi-voyager-sales-table .fi-ta-table tbody tr.fi-ta-row:nth-child(even) {
+    background-color: rgb(248 250 252) !important;
+}
+
+.fi-wi-voyager-sales-table .fi-ta-table tbody tr.fi-ta-row {
+    background-color: #fff !important;
+}
+
+.fi-wi-voyager-sales-table .border-t.border-gray-200\/90 {
+    border-color: rgb(226 232 240) !important;
+    background-color: rgb(248 250 252) !important;
+}
+
+.fi-wi-voyager-sales-table .border-t a {
+    font-weight: 600;
+    color: #1f3763 !important;
+    text-decoration-line: none;
+}
+
+.fi-wi-voyager-sales-table .border-t a:hover {
+    color: #163058 !important;
+    text-decoration-line: underline;
 }
 
 /* Softer striped rows globally */
@@ -74,6 +227,7 @@
     @apply overflow-hidden rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10;
 }
 
-.fi-wi-sales-dashboard-filters .fi-section {
-    @apply overflow-hidden rounded-xl bg-gradient-to-br from-white to-primary-50/30 shadow-sm ring-1 ring-primary-500/10 dark:from-gray-900 dark:to-primary-950/20 dark:ring-primary-400/20;
+/* Voyager-style toolbar uses inline chrome in the Blade widget */
+.fi-wi-voyager-sales-dashboard-filters {
+    margin-bottom: 0.25rem;
 }

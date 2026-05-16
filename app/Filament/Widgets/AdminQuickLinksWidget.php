@@ -7,7 +7,6 @@ use App\Filament\Pages\ServerStatusPage;
 use App\Filament\Pages\SiteSettingsPage;
 use App\Filament\Resources\Changelogs\ChangelogResource;
 use App\Filament\Resources\Charges\ChargeResource;
-use App\Filament\Resources\CmsMenuItems\CmsMenuItemResource;
 use App\Filament\Resources\CmsMenuItems\Pages\MenuBuilder;
 use App\Filament\Resources\CmsMenus\CmsMenuResource;
 use App\Filament\Resources\EnterpriseOnboardings\EnterpriseOnboardingResource;
@@ -58,9 +57,8 @@ class AdminQuickLinksWidget extends Widget
             ['label' => __('Posts'), 'url' => PostResource::getUrl()],
             ['label' => __('Pages'), 'url' => PageResource::getUrl()],
             ['label' => __('Post categories'), 'url' => PostCategoryResource::getUrl()],
-            ['label' => __('Menus'), 'url' => CmsMenuResource::getUrl()],
             ['label' => __('Menu builder'), 'url' => MenuBuilder::getUrl()],
-            ['label' => __('Menu items'), 'url' => CmsMenuItemResource::getUrl()],
+            ['label' => __('Menus'), 'url' => CmsMenuResource::getUrl()],
             ['label' => __('FAQ'), 'url' => FaqResource::getUrl()],
             ['label' => __('Changelog'), 'url' => ChangelogResource::getUrl()],
             ['label' => __('Plugins'), 'url' => SitePluginResource::getUrl()],
