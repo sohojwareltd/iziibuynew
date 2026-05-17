@@ -10,8 +10,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -21,6 +21,8 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Database\Eloquent\Model;
 
 class SubscriptionChargeResource extends Resource
 {
@@ -31,6 +33,28 @@ class SubscriptionChargeResource extends Resource
     protected static ?int $navigationSort = 50;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+
+    protected static ?string $recordTitleAttribute = 'quickpay_order_id';
+
+    protected static ?int $globalSearchSort = 43;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['id', 'quickpay_order_id', 'subscription_id'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string|Htmlable
+    {
+        $quickpay = $record->getAttribute('quickpay_order_id');
+        if (filled($quickpay)) {
+            return (string) $quickpay;
+        }
+
+        return __('Subscription charge').' #'.$record->getKey();
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -45,9 +69,9 @@ class SubscriptionChargeResource extends Resource
                 Toggle::make('status')
                     ->required(),
                 TextInput::make('quickpay_order_id'),
-                Textarea::make('payment_details')
+                RichEditor::make('payment_details')
                     ->columnSpanFull(),
-                Textarea::make('charge_details')
+                RichEditor::make('charge_details')
                     ->columnSpanFull(),
             ]);
     }
@@ -72,9 +96,11 @@ class SubscriptionChargeResource extends Resource
                     ->placeholder('-'),
                 TextEntry::make('payment_details')
                     ->placeholder('-')
+                    ->prose()
                     ->columnSpanFull(),
                 TextEntry::make('charge_details')
                     ->placeholder('-')
+                    ->prose()
                     ->columnSpanFull(),
             ]);
     }

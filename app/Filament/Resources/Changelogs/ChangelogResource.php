@@ -9,7 +9,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -29,15 +29,26 @@ class ChangelogResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMegaphone;
 
+    protected static ?string $recordTitleAttribute = 'version';
+
+    protected static ?int $globalSearchSort = 86;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['version', 'type', 'large_change'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 TextInput::make('version')
                     ->maxLength(255),
-                Textarea::make('description')
-                    ->columnSpanFull()
-                    ->rows(4),
+                RichEditor::make('description')
+                    ->columnSpanFull(),
                 TextInput::make('large_change')
                     ->maxLength(255),
                 TextInput::make('type')

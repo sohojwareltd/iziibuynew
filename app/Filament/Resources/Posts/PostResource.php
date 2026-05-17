@@ -11,6 +11,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -35,6 +36,18 @@ class PostResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
+    protected static ?string $recordTitleAttribute = 'title';
+
+    protected static ?int $globalSearchSort = 52;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title', 'slug', 'seo_title'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -53,9 +66,9 @@ class PostResource extends Resource
                     ->maxLength(255),
                 TextInput::make('seo_title')
                     ->maxLength(255),
-                Textarea::make('excerpt')
+                RichEditor::make('excerpt')
                     ->columnSpanFull(),
-                Textarea::make('body')
+                RichEditor::make('body')
                     ->columnSpanFull(),
                 FileUpload::make('image')
                     ->image()

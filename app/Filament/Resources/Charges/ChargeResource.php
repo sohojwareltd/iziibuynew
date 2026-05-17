@@ -9,9 +9,10 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -30,6 +31,18 @@ class ChargeResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
 
+    protected static ?string $recordTitleAttribute = 'order_id';
+
+    protected static ?int $globalSearchSort = 45;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['order_id', 'payment_type', 'details', 'comment'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -42,9 +55,9 @@ class ChargeResource extends Resource
                 TextInput::make('amount')
                     ->required()
                     ->numeric(),
-                Textarea::make('details')
+                RichEditor::make('details')
                     ->columnSpanFull(),
-                Textarea::make('comment')
+                RichEditor::make('comment')
                     ->columnSpanFull(),
                 Toggle::make('status')
                     ->required(),

@@ -36,6 +36,10 @@ class PaymentBadgeResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
 
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?int $globalSearchSort = 82;
+
     public static function form(Schema $schema): Schema
     {
         return $schema

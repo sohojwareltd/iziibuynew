@@ -9,7 +9,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -33,6 +33,10 @@ class FaqResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedQuestionMarkCircle;
 
+    protected static ?string $recordTitleAttribute = 'question';
+
+    protected static ?int $globalSearchSort = 56;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -41,10 +45,9 @@ class FaqResource extends Resource
                     ->required()
                     ->maxLength(500)
                     ->columnSpanFull(),
-                Textarea::make('answer')
+                RichEditor::make('answer')
                     ->required()
-                    ->columnSpanFull()
-                    ->rows(6),
+                    ->columnSpanFull(),
                 TextInput::make('sort_order')
                     ->numeric()
                     ->default(0),

@@ -10,8 +10,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -31,6 +31,10 @@ class TicketResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLifebuoy;
 
+    protected static ?string $recordTitleAttribute = 'subject';
+
+    protected static ?int $globalSearchSort = 60;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -43,7 +47,8 @@ class TicketResource extends Resource
                     ->required()
                     ->numeric(),
                 TextInput::make('subject'),
-                Textarea::make('massage')
+                RichEditor::make('massage')
+                    ->label(__('Message'))
                     ->columnSpanFull(),
                 FileUpload::make('image')
                     ->image(),

@@ -19,8 +19,12 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class OrderResource extends Resource
 {
@@ -31,6 +35,29 @@ class OrderResource extends Resource
     protected static ?int $navigationSort = 10;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;
+
+    protected static ?int $globalSearchSort = 5;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['id', 'payment_id', 'discount_code', 'shop.user_name'];
+    }
+
+    /**
+     * @return Builder<Order>
+     */
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with('shop');
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string|Htmlable
+    {
+        return __('Order').' #'.$record->getKey();
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -249,79 +276,91 @@ class OrderResource extends Resource
                             default => 'gray',
                         };
                     }),
-                TextColumn::make('payment_method')
-                    ->toggleable(isToggledHiddenByDefault: true)
+                TextColumn::make('currency')
                     ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
-                TextColumn::make('store_id')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('shop_id')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('referral_code')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('payment_id')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('discount')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('discount_code')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('subtotal')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('tax')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('shipping_cost')
-                    ->money('NOK')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('shipping_method')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('refund')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('payment_status')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('is_company')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('currency')
-                    ->searchable(),
-                TextColumn::make('type')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('paid_at')
-                    ->date()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                ColumnGroup::make(__('Payment'))
+                    ->columns([
+                        TextColumn::make('payment_method')
+                            ->toggleable(isToggledHiddenByDefault: true)
+                            ->searchable(),
+                        TextColumn::make('payment_id')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('payment_status')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('paid_at')
+                            ->date()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('IDs'))
+                    ->columns([
+                        TextColumn::make('store_id')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('user_id')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('shop_id')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('referral_code')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Amounts'))
+                    ->columns([
+                        TextColumn::make('subtotal')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('tax')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('shipping_cost')
+                            ->money('NOK')
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('shipping_method')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('discount')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('discount_code')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('refund')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Meta'))
+                    ->columns([
+                        TextColumn::make('is_company')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('type')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('updated_at')
+                            ->dateTime()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([

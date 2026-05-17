@@ -21,6 +21,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -40,7 +41,25 @@ class RetailerMetaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Retailers';
 
-    public static function getRecordTitle(?Model $record): string | \Illuminate\Contracts\Support\Htmlable | null
+    protected static ?int $globalSearchSort = 25;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['user.email', 'user.name', 'user.last_name', 'user.phone'];
+    }
+
+    /**
+     * @return Builder<RetailerMeta>
+     */
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with('user');
+    }
+
+    public static function getRecordTitle(?Model $record): string|Htmlable|null
     {
         if (! $record instanceof RetailerMeta) {
             return null;

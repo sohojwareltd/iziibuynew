@@ -12,14 +12,16 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -34,6 +36,18 @@ class ShopResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
+    protected static ?string $recordTitleAttribute = 'user_name';
+
+    protected static ?int $globalSearchSort = 35;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['user_name', 'area', 'payment_order_id', 'subscription_id', 'shopperId'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -45,7 +59,7 @@ class ShopResource extends Resource
                     ->numeric(),
                 TextInput::make('user_name')
                     ->required(),
-                Textarea::make('terms')
+                RichEditor::make('terms')
                     ->columnSpanFull(),
                 TextInput::make('payment_order_id'),
                 TextInput::make('tax')
@@ -121,6 +135,7 @@ class ShopResource extends Resource
                 TextEntry::make('user_name'),
                 TextEntry::make('terms')
                     ->placeholder('-')
+                    ->prose()
                     ->columnSpanFull(),
                 TextEntry::make('payment_order_id')
                     ->placeholder('-'),
@@ -222,90 +237,142 @@ class ShopResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('user_id')
-                    ->numeric()
+                TextColumn::make('user_name')
+                    ->label(__('Shop'))
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium'),
+                TextColumn::make('area')
+                    ->searchable()
+                    ->placeholder('—'),
+                IconColumn::make('status')
+                    ->boolean(),
+                TextColumn::make('monthly_cost')
+                    ->money('NOK')
                     ->sortable(),
                 TextColumn::make('retailer_id')
                     ->numeric()
-                    ->sortable(),
-                TextColumn::make('user_name')
-                    ->searchable(),
-                TextColumn::make('payment_order_id')
-                    ->searchable(),
-                TextColumn::make('tax')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('status')
-                    ->boolean(),
-                TextColumn::make('subscription_id')
-                    ->searchable(),
-                IconColumn::make('establishment')
-                    ->boolean(),
-                TextColumn::make('establishment_cost')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('monthly_cost')
-                    ->money()
-                    ->sortable(),
-                IconColumn::make('service_establishment')
-                    ->boolean(),
-                TextColumn::make('service_establishment_cost')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('service_monthly_fee')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('can_provide_service')
-                    ->boolean(),
-                TextColumn::make('per_user_fee')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('locations')
-                    ->searchable(),
-                TextColumn::make('selling_location_mode')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('contract_signed')
-                    ->boolean(),
-                IconColumn::make('contract_status')
-                    ->boolean(),
-                TextColumn::make('default_currency')
-                    ->searchable(),
-                TextColumn::make('area_id')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('store_as_pickup_point')
-                    ->boolean(),
-                TextColumn::make('paid_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('area')
-                    ->searchable(),
+                    ->sortable()
+                    ->placeholder('—'),
                 IconColumn::make('is_demo')
                     ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('previous_retailer')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('retailer_joined_at')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('previous_retailer_suspended_at')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('shopperId')
-                    ->searchable(),
-                TextColumn::make('subscriptionMethod')
-                    ->searchable(),
-                TextColumn::make('paymentMethod')
-                    ->searchable(),
+                ColumnGroup::make(__('People & IDs'))
+                    ->columns([
+                        TextColumn::make('user_id')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('payment_order_id')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('subscription_id')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('area_id')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('shopperId')
+                            ->label('Shopper ID')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Fees & services'))
+                    ->columns([
+                        TextColumn::make('tax')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        IconColumn::make('establishment')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('establishment_cost')
+                            ->money('NOK')
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        IconColumn::make('service_establishment')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('service_establishment_cost')
+                            ->money('NOK')
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('service_monthly_fee')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        IconColumn::make('can_provide_service')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('per_user_fee')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('paid_at')
+                            ->dateTime()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Locations & selling'))
+                    ->columns([
+                        TextColumn::make('locations')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('selling_location_mode')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        IconColumn::make('store_as_pickup_point')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Contract & currency'))
+                    ->columns([
+                        IconColumn::make('contract_signed')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        IconColumn::make('contract_status')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('default_currency')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Retailer history'))
+                    ->columns([
+                        TextColumn::make('previous_retailer')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('retailer_joined_at')
+                            ->date()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('previous_retailer_suspended_at')
+                            ->date()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Integration'))
+                    ->columns([
+                        TextColumn::make('subscriptionMethod')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('paymentMethod')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Timestamps'))
+                    ->columns([
+                        TextColumn::make('created_at')
+                            ->dateTime()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('updated_at')
+                            ->dateTime()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
             ])
             ->filters([
                 //

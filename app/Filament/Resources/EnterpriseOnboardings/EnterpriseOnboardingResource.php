@@ -32,6 +32,18 @@ class EnterpriseOnboardingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
+    protected static ?string $recordTitleAttribute = 'company_name';
+
+    protected static ?int $globalSearchSort = 15;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['company_name', 'company_email', 'key'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema

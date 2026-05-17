@@ -9,6 +9,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -35,6 +36,18 @@ class SitePluginResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPuzzlePiece;
 
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?int $globalSearchSort = 84;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'slug'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -48,9 +61,8 @@ class SitePluginResource extends Resource
                     ->unique(ignoreRecord: true),
                 Toggle::make('is_enabled')
                     ->label(__('Enabled')),
-                Textarea::make('description')
-                    ->columnSpanFull()
-                    ->rows(3),
+                RichEditor::make('description')
+                    ->columnSpanFull(),
                 Textarea::make('config')
                     ->columnSpanFull()
                     ->rows(6)

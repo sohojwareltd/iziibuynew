@@ -26,6 +26,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Route;
 
 class CmsMenuItemResource extends Resource
@@ -41,6 +42,26 @@ class CmsMenuItemResource extends Resource
     protected static ?string $pluralModelLabel = 'menu items';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLink;
+
+    protected static ?string $recordTitleAttribute = 'title';
+
+    protected static ?int $globalSearchSort = 71;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title', 'url', 'menu.name'];
+    }
+
+    /**
+     * @return Builder<CmsMenuItem>
+     */
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with('menu');
+    }
 
     public static function form(Schema $schema): Schema
     {

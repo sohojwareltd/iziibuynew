@@ -11,6 +11,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -21,6 +22,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -35,6 +37,18 @@ class ProductResource extends Resource
     protected static ?int $navigationSort = 30;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?int $globalSearchSort = 40;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'slug', 'sku', 'item', 'ean'];
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -59,13 +73,13 @@ class ProductResource extends Resource
                     ->numeric(),
                 TextInput::make('retailersaleprice')
                     ->numeric(),
-                Textarea::make('details')
+                RichEditor::make('details')
                     ->columnSpanFull(),
                 TextInput::make('sku')
                     ->label('SKU'),
                 TextInput::make('quantity')
                     ->numeric(),
-                Textarea::make('description')
+                RichEditor::make('description')
                     ->columnSpanFull(),
                 FileUpload::make('image')
                     ->image(),
@@ -176,9 +190,11 @@ class ProductResource extends Resource
                     ->schema([
                         TextEntry::make('description')
                             ->placeholder('-')
+                            ->prose()
                             ->columnSpanFull(),
                         TextEntry::make('details')
                             ->placeholder('-')
+                            ->prose()
                             ->columnSpanFull(),
                         TextEntry::make('areas')
                             ->placeholder('-')
@@ -245,86 +261,129 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('shop_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('parent_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('item')
-                    ->searchable(),
+                ImageColumn::make('image')
+                    ->circular(),
                 TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('ean')
-                    ->searchable(),
-                TextColumn::make('slug')
-                    ->searchable(),
-                TextColumn::make('price')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('saleprice')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('retailerprice')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('retailersaleprice')
-                    ->numeric()
-                    ->sortable(),
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium'),
                 TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable(),
+                TextColumn::make('price')
+                    ->money('NOK')
+                    ->sortable(),
                 TextColumn::make('quantity')
-                    ->numeric()
-                    ->sortable(),
-                ImageColumn::make('image'),
-                TextColumn::make('view')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('sale_count')
                     ->numeric()
                     ->sortable(),
                 IconColumn::make('status')
                     ->boolean(),
-                TextColumn::make('tax')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('is_variable')
-                    ->boolean(),
-                TextColumn::make('variation')
-                    ->searchable(),
-                TextColumn::make('length')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('width')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('height')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('weight')
-                    ->numeric()
-                    ->sortable(),
                 IconColumn::make('featured')
                     ->boolean(),
-                TextColumn::make('discount')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('qrcode')
-                    ->searchable(),
-                TextColumn::make('order_no')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('pin')
-                    ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                ColumnGroup::make(__('Identifiers'))
+                    ->columns([
+                        TextColumn::make('shop_id')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('parent_id')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('item')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('ean')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('slug')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Alternate pricing'))
+                    ->columns([
+                        TextColumn::make('saleprice')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('retailerprice')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('retailersaleprice')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('discount')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('tax')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Stats'))
+                    ->columns([
+                        TextColumn::make('view')
+                            ->label(__('Views'))
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('sale_count')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Dimensions & variations'))
+                    ->columns([
+                        IconColumn::make('is_variable')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('variation')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('length')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('width')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('height')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('weight')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Other'))
+                    ->columns([
+                        TextColumn::make('qrcode')
+                            ->searchable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('order_no')
+                            ->numeric()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        IconColumn::make('pin')
+                            ->boolean()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
+                ColumnGroup::make(__('Timestamps'))
+                    ->columns([
+                        TextColumn::make('created_at')
+                            ->dateTime()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        TextColumn::make('updated_at')
+                            ->dateTime()
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ]),
             ])
             ->filters([
                 //

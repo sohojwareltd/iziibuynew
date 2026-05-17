@@ -6,6 +6,7 @@ use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\Localization;
 use App\Services\Cms\AdminPanelNavigationBuilder;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Enums\GlobalSearchPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -60,6 +61,9 @@ class AdminPanelProvider extends PanelProvider
                     ->icon(Heroicon::OutlinedBuildingOffice2),
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->globalSearch(position: GlobalSearchPosition::Topbar)
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
+            ->globalSearchFieldKeyBindingSuffix()
             ->navigation(fn (): NavigationBuilder|bool => app(AdminPanelNavigationBuilder::class)->resolve())
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

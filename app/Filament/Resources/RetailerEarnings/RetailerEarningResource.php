@@ -9,14 +9,17 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class RetailerEarningResource extends Resource
 {
@@ -27,6 +30,26 @@ class RetailerEarningResource extends Resource
     protected static ?int $navigationSort = 30;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyDollar;
+
+    protected static ?int $globalSearchSort = 75;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['id', 'method', 'comments', 'transaction_type', 'shop.user_name', 'user.email'];
+    }
+
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with(['user', 'shop']);
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string|Htmlable
+    {
+        return __('Retailer earning').' #'.$record->getKey();
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -43,7 +66,7 @@ class RetailerEarningResource extends Resource
                     ->numeric(),
                 TextInput::make('method')
                     ->required(),
-                Textarea::make('comments')
+                RichEditor::make('comments')
                     ->columnSpanFull(),
                 Select::make('transaction_type')
                     ->options(['Add' => 'Add', 'Remove' => 'Remove'])

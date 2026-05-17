@@ -42,6 +42,18 @@ class SiteSettingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
+    protected static ?string $recordTitleAttribute = 'key';
+
+    protected static ?int $globalSearchSort = 90;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['key', 'label'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
